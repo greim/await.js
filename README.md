@@ -95,8 +95,8 @@ Separation of concerns is the first casualty of the nested-callback hell that pl
       <td>itself</td>
     </tr>
     <tr>
-      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">needs.fail(reason, ...)</td>
-      <td>Fail the promise for the given <code>reason</code>. The first argument should be a string. Any number of subsequent arguments are allowed, and these will be passed to any <code>onfail()</code> callbacks when they're executed.</td>
+      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">needs.fail(stringReason, ...)</td>
+      <td>Fail the promise for the given <code>reason</code>. The first argument is a string. Any number of subsequent arguments are allowed, and these will be applied to any <code>onfail()</code> callbacks.</td>
       <td>itself</td>
     </tr>
     <tr>
@@ -104,15 +104,10 @@ Separation of concerns is the first casualty of the nested-callback hell that pl
       <td>Chain <code>otherNeeds</code> into <code>needs</code>. <code>mapping</code> is an optional plain JS object serving as a way to map the other set of needs into this set of needs. Failure is chained also, so that if <code>otherNeeds</code> fails, </code>needs</code> fails.</td>
       <td>itself</td>
     </tr>
-    <tr>
-      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">needs.timeout(milliseconds)</td>
-      <td>Sets a time limit in which this promise must keep before it automatically fails with a timeout error message.</td>
-      <td>itself</td>
-    </tr>
   </tbody>
 </table>
 
-## "got"
+## Got
 
 In the body of your success callback (the function passed to `onkeep()`), you *got* all the things you need. All you need to worry about is what to do with it.
 
@@ -122,6 +117,17 @@ In the body of your success callback (the function passed to `onkeep()`), you *g
       // do something with got['a bar of soap']
       // do something with got['40 tons of fill dirt']
     })
+
+## Error handling
+
+Error handling is accomplished via the `fail()` and `onfail()` methods. The nice thing about these methods is that whatever you pass to `fail()` is what the `onfail()` callback receives. By convention the first argument should be a description string, but subsequent arguments can be `XMLHttpRequest` objects, exceptions objects, debugging info, whatever.
+
+    new Needs()
+    .fail('fake failure', 1, 2, 3)
+    .onfail(function(){
+      alert([].slice.call(arguments).join(','))
+    })
+    // alerts "fake failure,1,2,3"
 
 ## Chainability of promises
 
@@ -184,7 +190,7 @@ With the separation of concerns needs.js provides, it's possible (and advisable)
               prom.keep('model', model);
             },
             error: function(model, xhr){
-              prom.fail('error '+xhr.status);
+              prom.fail('error '+xhr.status, xhr);
             }
           });
           this.fetch(opts);

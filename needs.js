@@ -153,25 +153,7 @@ SOFTWARE.
     };
 
     // ########################################################################
-    // CHAPTER 4 - AUTO-TIMEOUT
-
-    /**
-    Automatically fail the promise after this many milliseconds.
-    */
-    PROMISE.timeout = function(millis){
-      setTimeout(function(){
-        if (SUCCESS || FAILURE) {return;}
-        var waiting = Object.keys(GOT).filter(function(item){
-          return GOT[item] === undefined;
-        });
-        var message = 'Timed out waiting on '+waiting.join(' and ');
-        PROMISE.fail(message);
-      }, millis);
-      return PROMISE;
-    };
-
-    // ########################################################################
-    // CHAPTER 5 - PROVISIONING (KEEPING & FAILING)
+    // CHAPTER 4 - PROVISIONING (KEEPING & FAILING)
 
     /*
     Keep part of the promise.
@@ -216,9 +198,6 @@ SOFTWARE.
     PROMISE.fail = function(){
       if (!FAILURE && !SUCCESS){
         FAILURE = slice.call(arguments);
-        if (FAILURE.length === 0) {
-          FAILURE.push('Unspecified error.');
-        }
         ALLBACKS.filter(function(obj){
           return obj.type === 'fail' || obj.type === 'resolve';
         }).forEach(function(obj){
@@ -235,7 +214,7 @@ SOFTWARE.
     };
 
     // ########################################################################
-    // CHAPTER 6 - CHAINING
+    // CHAPTER 5 - CHAINING
 
     /*
     p1 = new Promise('foo', 'bar', 'baz')

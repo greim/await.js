@@ -157,7 +157,7 @@ In other words, n1 took the intersection of itself with n2. That's easy enough t
     buz --> baz
     qux        
 
-Finally, it's worth noting that the mapping you declare overrides direct matches. For example:
+Finally, it's worth noting that if the mapping you declare conflicts with direct matches, the mapping wins. For example:
 
     n1.take(n2, {
       'buz':'baz',

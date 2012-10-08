@@ -98,7 +98,7 @@ SOFTWARE.
     and then returning that same instance.
     */
     PROMISE.run = function(cb, ctx){
-      ctx = ctx || PROMISE;
+      ctx = ctx || window;
       cb.call(ctx, PROMISE);
       return PROMISE;
     };
@@ -110,7 +110,7 @@ SOFTWARE.
       if (typeof cb !== 'function') {
         throw new Error('No callback provided.');
       }
-      ctx = ctx || PROMISE;
+      ctx = ctx || window;
 
       /*
       NOTE: It's possible for both SUCCESS and FAILURE to be
@@ -167,6 +167,7 @@ SOFTWARE.
         var message = 'Timed out waiting on '+waiting.join(' and ');
         PROMISE.fail(message);
       }, millis);
+      return PROMISE;
     };
 
     // ########################################################################

@@ -4,14 +4,27 @@
 
 needs.js is a variant of the promises pattern in asynchronous programming. With promises, you ask for a thing, and you get back an object with success and error events that you can listen on. In the body of your success event handler, you then have access to the thing you asked for. needs.js is the same way, but you ask for *multiple things*, and in the body of your success handler, you then have access to the *all the things*.
 
-needs.js exposes the `Needs` constructor, which creates a promise. You can then listen to `keep` and `fail` events on the promise.
+needs.js exposes the `Needs` constructor, which creates a promise. You can then listen to *keep* and *fail* events on the promise.
 
-    var promise = new Needs()
-    promise.onkeep(function(){ alert('hi!') })
+    new Needs('noun1', 'noun2', 'adjective')
+    .run(function(needs){
+      needs.keep('noun1', 'horse')
+      needs.keep('noun2', 'apple')
+      needs.keep('adjective', 'happy')
+    })
+    .onkeep(function(got){
+      console.log(
+      	"The %s eats the %s and is %s.",
+      	got.noun1,
+      	got.noun2,
+      	got.adjective
+      )
+      // "The horse eats the apple and is happy."
+    })
 
 ## What is it for? Separation of concerns.
 
-Separation of concerns easily gets lost in the nested-callback hell that sometimes results in asynch programming. It's nice when code doesn't force you to worry about lots of things at the same time.
+Separation of concerns is the first casualty of the nested-callback hell that plagues asynchronous JavaScript. It's nice when code doesn't force you to worry about lots of things at the same time.
 
     // I need things
     new Needs('user', 'feed')
@@ -19,12 +32,14 @@ Separation of concerns easily gets lost in the nested-callback hell that sometim
     // here's how I'll worry about getting them
     .run(function(needs){
 	  $.ajax('/api/current_user', {
-	    success: function(data){ needs.keep('user', data); },
-	    error: function(){ needs.fail('error fetching user'); }
+	    success: function(data){
+	      needs.keep('user', data);
+	    }
 	  })
 	  $.ajax('/api/feed', {
-	    success: function(data){ needs.keep('feed', data); },
-	    error: function(){ needs.fail('error fetching feed'); }
+	    success: function(data){
+	      needs.keep('feed', data);
+	    }
 	  })
     })
 
@@ -39,15 +54,32 @@ Separation of concerns easily gets lost in the nested-callback hell that sometim
 
 ## API overview
 
-  * `var needs = new Needs(thing1, thing2, ...)` - Constructor which creates a new promise instance object, which we've here named `needs`. The `new` keyword is required. Accepts zero or more string arguments.
-  * `needs.run(callback[, context])` - Runs `callback` immediately, which contains your promise fulfillment logic. `callback` is passed a reference to the instance. If provided, `context` will be `this` in `callback`, otherwise `this` will be `window`.
-  * `needs.onkeep(callback[, context])` - Execute `callback` when all needs are fulfilled and the promise is kept. If the promise has already been kept, `callback` is executed immediately. If provided, `context` will be `this` in `callback`, otherwise `this` will be `window`.
-  * `needs.onfail(callback[, context])` - Execute `callback` when promise fails. If promise has already failed, `callback` is executed immediately. If provided, `context` will be `this` in `callback`, otherwise `this` will be `window`.
-  * `needs.onresolve(callback[, context])` - Execute `callback` when promise either is kept of fails. If promise has already been kept or failed, `callback` is executed immediately. If provided, `context` will be `this` in `callback`, otherwise `this` will be `window`.
-  * `needs.keep(thing[, data])` - Fulfill one of the needs that were declared during construction. `data` is optional and if left out, defaults to `null`.
-  * `needs.fail(reason)` - Fail the promise for the given `reason`.
-  * `needs.take(otherNeeds[, mapping])` - Chain `otherNeeds` into `needs`. `mapping` is an optional plain JS object serving as a way to map the other set of needs into this set of needs. Failure is chained also, so that if `otherNeeds` fails, `needs` fails.
-  * `needs.timeout(milliseconds)` - Sets a time limit in which this promise must keep before it automatically fails with a timeout error message.
+### `var needs = new Needs(thing1, thing2, ...)`
+Constructor which creates a new promise instance object, which we've here named `needs`. The `new` keyword is required. Accepts zero or more string arguments.
+
+### `needs.run(callback[, context])`
+Runs `callback` immediately, which contains your promise fulfillment logic. `callback` is passed a reference to the instance. If provided, `context` will be `this` in `callback`, otherwise `this` will be `window`.
+
+### `needs.onkeep(callback[, context])`
+Execute `callback` when all needs are fulfilled and the promise is kept. If the promise has already been kept, `callback` is executed immediately. If provided, `context` will be `this` in `callback`, otherwise `this` will be `window`.
+
+### `needs.onfail(callback[, context])`
+Execute `callback` when promise fails. If promise has already failed, `callback` is executed immediately. If provided, `context` will be `this` in `callback`, otherwise `this` will be `window`.
+
+### `needs.onresolve(callback[, context])`
+Execute `callback` when promise either is kept of fails. If promise has already been kept or failed, `callback` is executed immediately. If provided, `context` will be `this` in `callback`, otherwise `this` will be `window`.
+
+### `needs.keep(thing[, data])`
+Fulfill one of the needs that were declared during construction. `data` is optional and if left out, defaults to `null`.
+
+### `needs.fail(reason)`
+Fail the promise for the given `reason`.
+
+### `needs.take(otherNeeds[, mapping])`
+Chain `otherNeeds` into `needs`. `mapping` is an optional plain JS object serving as a way to map the other set of needs into this set of needs. Failure is chained also, so that if `otherNeeds` fails, `needs` fails.
+
+### `needs.timeout(milliseconds)`
+Sets a time limit in which this promise must keep before it automatically fails with a timeout error message.
 
 ## Chainability
 

@@ -56,32 +56,62 @@ Separation of concerns is the first casualty of the nested-callback hell that pl
 
 ## API overview
 
-### `var needs = new Needs(thing1, thing2, ...)`
-Constructor which creates a new promise instance object, which we've here named `needs`. The `new` keyword is required. Accepts zero or more string arguments.
-
-### `needs.run(callback[, context])`
-Runs `callback` immediately, which contains your promise fulfillment logic. `callback` is passed a reference to the instance. If provided, `context` will be `this` in `callback`, otherwise `this` will be `window`.
-
-### `needs.onkeep(callback[, context])`
-Execute `callback` when all needs are fulfilled and the promise is kept. If the promise has already been kept, `callback` is executed immediately. If provided, `context` will be `this` in `callback`, otherwise `this` will be `window`.
-
-### `needs.onfail(callback[, context])`
-Execute `callback` when promise fails. If promise has already failed, `callback` is executed immediately. If provided, `context` will be `this` in `callback`, otherwise `this` will be `window`.
-
-### `needs.onresolve(callback[, context])`
-Execute `callback` when promise either is kept of fails. If promise has already been kept or failed, `callback` is executed immediately. If provided, `context` will be `this` in `callback`, otherwise `this` will be `window`.
-
-### `needs.keep(thing[, data])`
-Fulfill one of the needs that were declared during construction. `data` is optional and if left out, defaults to `null`.
-
-### `needs.fail(reason)`
-Fail the promise for the given `reason`.
-
-### `needs.take(otherNeeds[, mapping])`
-Chain `otherNeeds` into `needs`. `mapping` is an optional plain JS object serving as a way to map the other set of needs into this set of needs. Failure is chained also, so that if `otherNeeds` fails, `needs` fails.
-
-### `needs.timeout(milliseconds)`
-Sets a time limit in which this promise must keep before it automatically fails with a timeout error message.
+<table summary="overview of needs api">
+  <thead>
+    <tr>
+      <th>method</th>
+      <th>description</th>
+      <th>returns</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>`var needs = new Needs(thing1, thing2, ...)`</td>
+      <td>Constructor which creates a new promise instance object, which we've here named `needs`. The `new` keyword is required. Accepts zero or more string arguments.</td>
+      <td>`Needs` instance</td>
+    </tr>
+    <tr>
+      <td>`needs.run(callback[, context])`</td>
+      <td>Runs `callback` immediately, which contains your promise fulfillment logic. `callback` is passed a reference to the instance. If provided, `context` will be `this` in `callback`, otherwise `this` will be `window`.</td>
+      <td>itself</td>
+    </tr>
+    <tr>
+      <td>`needs.onkeep(callback[, context])`</td>
+      <td>Execute `callback` when all needs are fulfilled and the promise is kept. If the promise has already been kept, `callback` is executed immediately. If provided, `context` will be `this` in `callback`, otherwise `this` will be `window`.</td>
+      <td>itself</td>
+    </tr>
+    <tr>
+      <td>`needs.onfail(callback[, context])`</td>
+      <td>Execute `callback` when promise fails. If promise has already failed, `callback` is executed immediately. If provided, `context` will be `this` in `callback`, otherwise `this` will be `window`.</td>
+      <td>itself</td>
+    </tr>
+    <tr>
+      <td>`needs.onresolve(callback[, context])`</td>
+      <td>Execute `callback` when promise either is kept of fails. If promise has already been kept or failed, `callback` is executed immediately. If provided, `context` will be `this` in `callback`, otherwise `this` will be `window`.</td>
+      <td>itself</td>
+    </tr>
+    <tr>
+      <td>`needs.keep(thing[, data])`</td>
+      <td>Fulfill one of the needs that were declared during construction. `data` is optional and if left out, defaults to `null`.</td>
+      <td>itself</td>
+    </tr>
+    <tr>
+      <td>`needs.fail(reason)`</td>
+      <td>Fail the promise for the given `reason`.</td>
+      <td>itself</td>
+    </tr>
+    <tr>
+      <td>`needs.take(otherNeeds[, mapping])`</td>
+      <td>Chain `otherNeeds` into `needs`. `mapping` is an optional plain JS object serving as a way to map the other set of needs into this set of needs. Failure is chained also, so that if `otherNeeds` fails, `needs` fails.</td>
+      <td>itself</td>
+    </tr>
+    <tr>
+      <td>`needs.timeout(milliseconds)`</td>
+      <td>Sets a time limit in which this promise must keep before it automatically fails with a timeout error message.</td>
+      <td>itself</td>
+    </tr>
+  </tbody>
+</table>
 
 ## Chainability of promises
 

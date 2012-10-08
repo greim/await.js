@@ -173,21 +173,42 @@ Finally, it's worth noting that if the mapping you declare conflicts with direct
 
 ## Libraryification
 
-With the separation of concerns needs.js provides, it's possible (and advisable) to offload the getting of things to functions or libraries.
+With the separation of concerns needs.js provides, it's possible (and advisable) to offload the getting of things to functions or libraries. You could, for example, extend the Backbone.js Model and Collection objects to have `pfetch` methods that return single-item promises for `model` and `collection`, respectively.
 
-	function getInfo() { // <-- your library method
-      return new Needs('user', 'feed')
-      .run(function(needs){
-	    $.ajax('/api/current_user', {
-	      success: function(data){ needs.keep('user', data); },
-	      error: function(){ needs.fail('error fetching user'); }
-	    })
-	    $.ajax('/api/feed', {
-	      success: function(data){ needs.keep('feed', data); },
-	      error: function(){ needs.fail('error fetching feed'); }
-	    })
-      })
-	}
+    _.extend(Backbone.Model.prototype, {
+      pfetch: function(opts){
+        return new Needs('model')
+        .run(function(prom){
+          opts || (opts = {});
+          _.extend(opts, {
+            success: function(model){
+              prom.keep('model', model);
+            },
+            error: function(model, xhr){
+              prom.fail('error '+xhr.status);
+            }
+          });
+          this.fetch(opts);
+        }, this);
+      }
+    });
+    ...etc...
+
+Suddenly, building page views on asynchronous data fetches isn't very complicated at all.
+
+    // somewhere in a route handler
+    new Needs('user', 'feed')
+    .run(function(prom){
+      prom.take(new User({id:userId}).pfetch(), {'model':'user'})
+      prom.take(new Feed(null, {userId:userId}).pfetch(), {'collection':'feed'})
+    })
+    .onkeep(function(got){
+      new UserFeedView({
+        el: '#content',
+        model: got.model,
+        collection: got.collection
+      }).render();
+    })
 
 ## Other things to note
 

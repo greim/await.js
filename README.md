@@ -1,8 +1,8 @@
-# needs.js: Multi-variable promises for asynchronous JavaScript
+# needs.js: Multi-var promises for asynchronous JavaScript
 
 needs.js has no library dependencies and runs either in browsers, or in Node, without any special configuration. **Old browser note**: you'll need some polyfill goodness to get it to work in browsers that don't support JavaScript JavaScript 1.8.5. AKA IE lte 8. Try modernizr.
 
-## What are multi-variable promises?
+## What are multi-var promises?
 
 With regular promises, you ask for a thing, and you get back an object with success and error events that you can set listeners on. In the body of your success event handler, you then have access to the thing you asked for. needs.js is the same way, but you ask for *multiple things*, and in the body of your success handler, you then have access to the *all the things*.
 

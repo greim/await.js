@@ -1,4 +1,4 @@
-# Multi-variable promises for asynchronous JavaScript
+# needs.js: Multi-variable promises for asynchronous JavaScript
 
 needs.js has no library dependencies and runs either in browsers, or in Node, without any special configuration. **Old browser note**: you'll need some polyfill goodness to get it to work in browsers that don't support JavaScript JavaScript 1.8.5. AKA IE lte 8. Try modernizr.
 

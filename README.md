@@ -1,6 +1,6 @@
 # needs.js - For when you need things
 
-needs.js is multi-variable promises. It has no library dependencies and runs either in browsers or in node without any special configuration.
+needs.js is multi-variable promises. It has no library dependencies and runs either in browsers or in node without any special configuration. **Old browser note**: you'll need some polyfill goodness to get it to work in browsers that don't support JavaScript 1.6, such as IE8.
 
 ## What are multi-variable promises.
 
@@ -162,7 +162,7 @@ Finally, it's worth noting that the mapping you declare overrides direct matches
 
 ## Libraryification
 
-With the separation of concerns between getting and using things that needs.js provides, it's possible (and advisable) to offload the getting of things to functions or libraries.
+With the separation of concerns needs.js provides, it's possible (and advisable) to offload the getting of things to functions or libraries.
 
 	function getInfo() { // <-- your library method
       return new Needs('user', 'feed')
@@ -233,8 +233,8 @@ The `run()` method just avoids depositing a variable in scope, provides a handy 
     .onkeep(function(){ alert('keep2') })
     .onfail(function(){ alert('fail2') })
 
-    // onfail: alerts 'fail1' > 'resolve' > 'fail2'
-    // onkeep: alerts 'keep1' > 'resolve' > 'keep2'
+    // in case of fail, alerts 'fail1' > 'resolve' > 'fail2'
+    // in case of keep, alerts 'keep1' > 'resolve' > 'keep2'
 
 
 

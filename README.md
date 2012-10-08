@@ -56,13 +56,16 @@ Separation of concerns is the first casualty of the nested-callback hell that pl
 
 ## API overview
 
+<div>
 <style type="text/css">
-  .need-method{
-    white-space: nowrap;
-    font-family: monospace;
-    font-size:90%;
-  }
+.need-method{
+white-space: nowrap;
+font-family: monospace;
+font-size:90%;
+}
 </style>
+</div>
+
 <table summary="overview of needs api">
   <thead>
     <tr>

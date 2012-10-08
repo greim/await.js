@@ -83,14 +83,16 @@ Sets a time limit in which this promise must keep before it automatically fails 
 
 ## Chainability
 
-Chainability is a key advantage of the Promise pattern, and needs.js has it.
+Chainability is a key advantage of the Promise pattern, and needs.js has it. Here we've declared two sets of needs, and we want to "pump" the output of one into the other:
 
     n1 = new Needs('foo', 'bar', 'baz')
     n2 = new Needs('foo', 'bar', 'buz', 'qux')
 
-One needs object can `take()` another. How does needs.js deal with `n1` having a different set of things than `n2`? Consider:
+What happens is that n1 can *take* n2.
 
-    n1.take(n2)
+    n1.take(n2) // there's lots of code here that you didn't write
+
+What about the fact that n1 has a different set of things than n2? Consider:
 
     n1      n2
     ===========
@@ -99,7 +101,7 @@ One needs object can `take()` another. How does needs.js deal with `n1` having a
     baz     buz
             qux
 
-In other words, `n1` takes any values it finds that match ones in `n2`. That's easy enough to understand. But you can also further specify how `n2` gets mapped intp `n1` by giving a mapping object:
+In other words, n1 takes the intersection of itself with n2. That's easy enough to understand. But you can also further specify how `n2` gets mapped intp `n1` by giving a mapping object:
 
     n1.take(n2, {'buz':'baz'})
 

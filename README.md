@@ -1,6 +1,8 @@
 # needs.js - For when you need things
 
-## What is it? Multi-variable promises.
+needs.js is multi-variable promises. It has no library dependencies and runs either in browsers or in node without any special configuration.
+
+## What are multi-variable promises.
 
 needs.js is a variant of the promises pattern in asynchronous programming. With promises, you ask for a thing, and you get back an object with success and error events that you can listen on. In the body of your success event handler, you then have access to the thing you asked for. needs.js is the same way, but you ask for *multiple things*, and in the body of your success handler, you then have access to the *all the things*.
 

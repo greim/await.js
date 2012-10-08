@@ -1,8 +1,6 @@
 # PROJECT: For when you need things.
 
-Everybody wants a minion. When you have a minion, you get to say things like "Minion. I want a bar of soap, twelve tons of fill dirt, and John Goodman's fax number." And instead of insolently saying "how do you expect me to do that, boss?" the minion just disappears for a while, and then you get a phone call at 4AM and it's the minion saying that your soap and dirt and fax number are ready. Do you worry about how dirty the minion got, who he had to bribe, or how many people died in the getting of those things? No. Does the minion worry about why you want them and what you're going to do with them? No. That's the whole point of having a minion.
-
-## What is it? Multivariate promises.
+## What is it? Multi-variable promises.
 
 PROJECT is a variant of the promises pattern in asynchronous programming. With promises, you ask for a thing, and you get back an object with success and error events that you can listen on. In the body of your success event handler, you then have access to the thing you asked for. PROJECT is the same way, but you ask for *multiple things*, and in the body of your success handler, you have access to the *all the things*.
 
@@ -30,7 +28,9 @@ PROJECT is a variant of the promises pattern in asynchronous programming. With p
       alert(got.feed)
     })
 
-# Usage and API
+# Usage
+
+## API overview
 
   * `PROJECT.Promise(thing1, thing2, ...)` - Constructor. The `new` keyword is required. Accepts zero or more arguments, which are coerced to strings.
   * `promise.run(callback[, context])` - Runs `callback` immediately, which contains the promise fulfillment logic. `callback` is passed a reference to this promise instance. If provided, `context` will be `this` within `callback`, otherwise `this` will be the promise instance.
@@ -42,7 +42,68 @@ PROJECT is a variant of the promises pattern in asynchronous programming. With p
   * `promise.take(anotherPromise[, mapping])` - Chain `anotherPromise` into `promise`. `mapping` is an optional plain JS object serving as a map. Suppose `promise` was constructed on `"foo"` and `"bar"`, whereas `anotherPromise` was constructed on `"foo"` and `"baz"`. If `mapping` was undefined, then only `"foo"` would "take" from `anotherPromise` to `promise`. If `mapping` was defined and was `{'baz':'bar'}`, then `"baz"` of `anotherPromise` will "take" into `"bar"` of `promise`. Finally, if `anotherPromise` fails, it will cause `promise` to fail.
   * `promise.failAfter(milliseconds)` - Sets a time limit in which this promise must keep before it automatically fails with a timeout error message.
 
-## Things to note
+## Chainability
+
+Chainability is a key advantage of the Promise pattern, and PROJECT has it.
+
+    p1 = new Promise('foo', 'bar', 'baz')
+    p2 = new Promise('foo', 'bar', 'buz', 'qux')
+
+One promise can `take()` another. How does PROJECT deal with `p1` having a different set of things than `p2`? Consider:
+
+    p1.take(p2)
+
+    p1      p2
+    ===========
+    foo <-- foo
+    bar <-- bar
+    baz     buz
+            qux
+
+In other words, p1 takes any matching values it finds. That's easy enough to understand. But you can also further specify how `p2` gets mapped intp `p1` by providing a mapping object:
+
+    p1.take(p2, {'buz':'baz'})
+
+    p1      p2
+    ===========
+    foo <-- foo
+    bar <-- bar
+    baz <-- buz
+            qux
+
+Finally, it's worth noting that the mapping you declare overrides direct matches. For example:
+
+    p1.take(p2, {
+      'buz':'baz',
+      'qux':'bar'
+    })
+
+    p1      p2
+    ===========
+    foo <-- foo
+    bar <-- qux
+    baz <-- buz
+            bar
+
+## Libraryification
+
+With the separation of concerns between getting and using things that PROJECT provides, it's possible (and advisable) to offload the getting of things to functions or libraries.
+
+	function getInfo() {
+      return new PROJECT.Promise('user', 'feed')
+      .run(function(promise){
+	    $.ajax('/api/current_user', {
+	      success: function(data){ promise.keep('user', data); },
+	      error: function(){ promise.fail('error fetching user'); }
+	    })
+	    $.ajax('/api/feed', {
+	      success: function(data){ promise.keep('feed', data); },
+	      error: function(){ promise.fail('error fetching feed'); }
+	    })
+      })
+	}
+
+## Other things to note
 
 Promises can be optionally constructed on arrays, all other rules being the same.
 
@@ -56,6 +117,10 @@ Empty promises are legal and keep immediately.
       alert(JSON.stringify(got));
     })
     // alerts '{}'
+
+Things are coerced to strings.
+
+    new PROJECT.Promise({}) // converted to "[object Object]"
 
 There's nothing magical about the `run()` method. It just runs the given function, passing it the promise instance, and then returns that same instance.
 
@@ -87,51 +152,6 @@ The `run()` method avoids depositing a variable in scope.
     .onfail(function(){ alert('fail2') })
     // if failed, alert 'fail1' > 'resolve' > 'fail2'
     // if kept, alert 'keep1' > 'resolve' > 'keep2'
-
-## Chainability
-
-Chainability is a key advantage of the Promise pattern, and PROJECT has it.
-
-    p1 = new Promise('foo', 'bar', 'baz')
-    p2 = new Promise('foo', 'bar', 'buz', 'qux')
-
-One promise can `take()` another. How does PROJECT deal with `p1` having a different set of things than `p2`? Consider:
-
-    p1.take(p2)
-
-    p1      p2
-    ===========
-    foo <-- foo
-    bar <-- bar
-    baz     buz
-            qux
-
-In other words, p1 takes any matching values it finds. In this case, both "foo" and "bar" took. That's easy enough to understand. But you can also further specify how `p2` gets mapped intp `p1` by providing a mapping object:
-
-    p1.take(p2, {'buz':'baz'})
-
-    p1      p2
-    ===========
-    foo <-- foo
-    bar <-- bar
-    baz <-- buz
-            qux
-
-Finally, it's worth noting that the mapping you declare overrides direct matches. For example:
-
-    p1.take(p2, {
-      'buz':'baz',
-      'qux':'bar'
-    })
-
-    p1      p2
-    ===========
-    foo <-- foo
-    bar <-- qux
-    baz <-- buz
-            bar
-
-
 
 
 

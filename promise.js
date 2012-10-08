@@ -1,15 +1,38 @@
-/**
-Multi Promises. For when you need things.
-*/
-(function(slice){
+// ########################################################################
+// PROLOGUE
 
-  var slice = [].slice,
-      project = '_____';
+/*
+Copyright (c) 2012 by Greg Reimer
+https://github.com/greim
+http://obadger.com/
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
+(function(){
+
+  // ########################################################################
+  // CHAPTER 1 - DECLARATION
+
+  var slice = [].slice;
 
   var Promise = function(){
-
-    // ########################################################################
-    // CHAPTER 1 - introduction
 
     /*
     Using convention of uppercase names for vars scoped to Promise()
@@ -68,7 +91,7 @@ Multi Promises. For when you need things.
     var GOT = {};
 
     // ########################################################################
-    // CHAPTER 2 - running
+    // CHAPTER 2 - RUNNING
 
     /**
     Runs the given callback, passing it an instance of the promise,
@@ -81,7 +104,7 @@ Multi Promises. For when you need things.
     };
 
     // ########################################################################
-    // CHAPTER 3 - events
+    // CHAPTER 3 - EVENTS
 
     function on(event, cb, ctx){
       if (typeof cb !== 'function') {
@@ -130,7 +153,7 @@ Multi Promises. For when you need things.
     };
 
     // ########################################################################
-    // CHAPTER 4 - automatic timeout
+    // CHAPTER 4 - AUTO-TIMEOUT
 
     /**
     Automatically fail the promise after this many milliseconds.
@@ -147,7 +170,7 @@ Multi Promises. For when you need things.
     };
 
     // ########################################################################
-    // CHAPTER 5 - provisioning (keeping & failing)
+    // CHAPTER 5 - PROVISIONING (KEEPING & FAILING)
 
     /*
     Keep part of the promise.
@@ -208,7 +231,7 @@ Multi Promises. For when you need things.
     };
 
     // ########################################################################
-    // CHAPTER 6 - chaining
+    // CHAPTER 6 - CHAINING
 
     /*
     p1 = new Promise('foo', 'bar', 'baz')
@@ -232,13 +255,13 @@ Multi Promises. For when you need things.
     baz <-- buz
             qux
 
-    p1.take(p2, {'qux','bar'})
+    p1.take(p2, {'qux':'bar','buz':'baz'})
 
     p1      p2
     ===========
     foo <-- foo
     bar <-- qux
-    baz     buz
+    baz <-- buz
             bar
 
     */
@@ -268,22 +291,25 @@ Multi Promises. For when you need things.
           PROMISE.keep(item, taken[item]);
         });
       });
+      return PROMISE;
     };
-
-    // ########################################################################
-    // IT'S OVER!!!
-
   };
+
+  // ########################################################################
+  // CONCLUSION
 
   // for browsers
   if (window) {
-    window[project] = Promise;
+    window.Needs = Promise;
   }
 
   // for node
   if (exports) {
-    exports.Promise = Promise;
+    exports.Needs = Promise;
   }
+
+  // ########################################################################
+  // IT'S OVER!
 
 })();
 

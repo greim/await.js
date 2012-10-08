@@ -56,6 +56,13 @@ Separation of concerns is the first casualty of the nested-callback hell that pl
 
 ## API overview
 
+<style type="text/css">
+  .need-method{
+    white-space: nowrap;
+    font-family: monospace;
+    font-size:90%;
+  }
+</style>
 <table summary="overview of needs api">
   <thead>
     <tr>
@@ -64,13 +71,6 @@ Separation of concerns is the first casualty of the nested-callback hell that pl
       <th>returns</th>
     </tr>
   </thead>
-  <style type="text/css">
-    .need-method{
-      white-space: nowrap;
-      font-family: monospace;
-      font-size:90%;
-    }
-  </style>
   <tbody>
     <tr>
       <td class="need-method">var needs = new Needs(thing1, thing2, ...)</td>

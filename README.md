@@ -215,7 +215,7 @@ Suddenly, building page views on asynchronous data fetches isn't very complicate
       }).render();
     })
 
-## Other things to note
+## Picky details and incidentalities
 
 Methods are chainable where it makes sense, if that kind of thing floats your boat.
 

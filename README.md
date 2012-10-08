@@ -77,12 +77,12 @@ Separation of concerns is the first casualty of the nested-callback hell that pl
     </tr>
     <tr>
       <td style="white-space: nowrap;font-family: monospace;font-size:90%;">needs.onkeep(callback[, context])</td>
-      <td>Execute <code>callback</code> when all needs are fulfilled and the promise is kept. If the promise has already been kept, <code>callback</code> is executed immediately. If provided, <code>context</code> will be <code>this</code> in <code>callback</code>, otherwise <code>this</code> will be <code>window</code>.</td>
+      <td>Execute <code>callback</code> when all needs are fulfilled and the promise is kept. If the promise has already been kept, <code>callback</code> is executed immediately. <code>callback</code> is passed an object map containing all the things you need. If provided, <code>context</code> will be <code>this</code> in <code>callback</code>, otherwise <code>this</code> will be <code>window</code>.</td>
       <td>itself</td>
     </tr>
     <tr>
       <td style="white-space: nowrap;font-family: monospace;font-size:90%;">needs.onfail(callback[, context])</td>
-      <td>Execute <code>callback</code> when promise fails. If promise has already failed, <code>callback</code> is executed immediately. If provided, <code>context</code> will be <code>this</code> in <code>callback</code>, otherwise <code>this</code> will be <code>window</code>.</td>
+      <td>Execute <code>callback</code> when promise fails. If promise has already failed, <code>callback</code> is executed immediately. <code>callback</code> is passed the reason the promise failed. If provided, <code>context</code> will be <code>this</code> in <code>callback</code>, otherwise <code>this</code> will be <code>window</code>.</td>
       <td>itself</td>
     </tr>
     <tr>
@@ -112,6 +112,17 @@ Separation of concerns is the first casualty of the nested-callback hell that pl
     </tr>
   </tbody>
 </table>
+
+## "got"
+
+In the body of your success callback (the function passed to `onkeep()`), you *got* all the things you need. All you need to worry about is what to do with it.
+
+    // I need a bar of soap and forty tons of fill dirt
+    new Needs('a bar of soap', '40 tons of fill dirt')
+    .onkeep(function(got){
+      // do something with got['a bar of soap']
+      // do something with got['40 tons of fill dirt']
+    })
 
 ## Chainability of promises
 

@@ -1,12 +1,17 @@
-# needs.js: For when you need things.
+# needs.js - For when you need things
 
 ## What is it? Multi-variable promises.
 
 needs.js is a variant of the promises pattern in asynchronous programming. With promises, you ask for a thing, and you get back an object with success and error events that you can listen on. In the body of your success event handler, you then have access to the thing you asked for. needs.js is the same way, but you ask for *multiple things*, and in the body of your success handler, you then have access to the *all the things*.
 
-needs.js adds the `Needs` constructor to `window`, which creates a promise. You can then listen to `keep` (success) and `fail` (error) events on a `Needs` instance.
+needs.js exposes the `Needs` constructor, which creates a promise. You can then listen to `keep` and `fail` events on the promise.
+
+    var promise = new Needs()
+    promise.onkeep(function(){ alert('hi!') })
 
 ## What is it for? Separation of concerns.
+
+Separation of concerns easily gets lost in the nested-callback hell that sometimes results in asynch programming. It's nice when code doesn't force you to worry about lots of things at the same time.
 
     // I need things
     new Needs('user', 'feed')
@@ -159,7 +164,7 @@ The `run()` method just avoids depositing a variable in scope, provides a handy 
     .onresolve(function(){ alert('resolve') })
     .onkeep(function(){ alert('keep2') })
     .onfail(function(){ alert('fail2') })
-    
+
     // onfail, alert 'fail1' > 'resolve' > 'fail2'
     // onkeep, alert 'keep1' > 'resolve' > 'keep2'
 

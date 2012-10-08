@@ -42,7 +42,6 @@ Separation of concerns is the first casualty of the nested-callback hell that pl
 	    success: function(data){
 	      needs.keep('feed', data);
 	    }
-	  })
     })
 
     // here's how I'll worry about using them
@@ -82,7 +81,7 @@ Separation of concerns is the first casualty of the nested-callback hell that pl
     </tr>
     <tr>
       <td style="white-space: nowrap;font-family: monospace;font-size:90%;">needs.onfail(callback[, context])</td>
-      <td>Execute <code>callback</code> when promise fails. If promise has already failed, <code>callback</code> is executed immediately. <code>callback</code> is passed the reason the promise failed. If provided, <code>context</code> will be <code>this</code> in <code>callback</code>, otherwise <code>this</code> will be <code>window</code>.</td>
+      <td>Execute <code>callback</code> when promise fails. If promise has already failed, <code>callback</code> is executed immediately. <code>callback</code> is passed the reason the promise failed, plus whatever subsequent arguments were passed to the <code>fail()</code> method. If provided, <code>context</code> will be <code>this</code> in <code>callback</code>, otherwise <code>this</code> will be <code>window</code>.</td>
       <td>itself</td>
     </tr>
     <tr>
@@ -96,8 +95,8 @@ Separation of concerns is the first casualty of the nested-callback hell that pl
       <td>itself</td>
     </tr>
     <tr>
-      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">needs.fail(reason)</td>
-      <td>Fail the promise for the given <code>reason</code>.</td>
+      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">needs.fail(reason, ...)</td>
+      <td>Fail the promise for the given <code>reason</code>. The first argument should be a string. Any number of subsequent arguments are allowed, and these will be passed to any <code>onfail()</code> callbacks when they're executed.</td>
       <td>itself</td>
     </tr>
     <tr>
@@ -126,7 +125,7 @@ In the body of your success callback (the function passed to `onkeep()`), you *g
 
 ## Chainability of promises
 
-Chainability is a key advantage of promises. Here we've declared two sets of needs, and we want to suck the output of one into the other:
+Chainability is a key advantage of promises. Here we've declared two sets of needs, and we want to suck the output from one to the other:
 
     n1 = new Needs('foo', 'bar', 'baz')
     n2 = new Needs('foo', 'bar', 'buz', 'qux')
@@ -137,7 +136,7 @@ What happens is that n1 can *take* n2.
                 // hence this comment is here to take up some of
                 // the dead space.
 
-What about the fact that n1 has a different set of things than n2? What happened in this case is:
+n1 now takes n2, and if n2 fails, n1 fails. But what about the fact that n1 has a different set of things than n2? What happened in this case is:
 
     n2      n1 
     ===========
@@ -157,7 +156,7 @@ In other words, n1 took the intersection of itself with n2. That's easy enough t
     buz --> baz
     qux        
 
-Finally, it's worth noting that if the mapping you declare conflicts with direct matches, the mapping wins. For example:
+Also, it's worth noting that if the mapping you declare conflicts with direct matches, the mapping wins. For example:
 
     n1.take(n2, {
       'buz':'baz',
@@ -171,7 +170,7 @@ Finally, it's worth noting that if the mapping you declare conflicts with direct
     buz --> baz
     bar        
 
-## Libraryification
+## Libraryification (Backbone.js example)
 
 With the separation of concerns needs.js provides, it's possible (and advisable) to offload the getting of things to functions or libraries. You could, for example, extend the Backbone.js Model and Collection objects to have `pfetch` methods that return single-item promises for `model` and `collection`, respectively.
 
@@ -200,7 +199,7 @@ Suddenly, building page views on asynchronous data fetches isn't very complicate
     new Needs('model', 'collection')
     .run(function(prom){
       prom.take(new User({id:userId}).pfetch())
-      prom.take(new FeedItems(null, {userId:userId}).pfetch())
+      prom.take(new Feed(null, {userId:userId}).pfetch())
     })
     .onkeep(function(got){
       new UserFeedView({

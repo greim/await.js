@@ -128,7 +128,7 @@ SOFTWARE.
           }
         } else {
           if (event === 'fail') {
-            cb.call(ctx, FAILURE);
+            cb.apply(ctx, FAILURE);
           }
         }
       } else {
@@ -213,14 +213,17 @@ SOFTWARE.
     /*
     Fail the promise for some reason.
     */
-    PROMISE.fail = function(reason){
+    PROMISE.fail = function(){
       if (!FAILURE && !SUCCESS){
-        FAILURE = reason || 'Unspecified error.';
+        FAILURE = slice.call(arguments);
+        if (FAILURE.length === 0) {
+          FAILURE.push('Unspecified error.');
+        }
         ALLBACKS.filter(function(obj){
           return obj.type === 'fail' || obj.type === 'resolve';
         }).forEach(function(obj){
           if (obj.type === 'fail') {
-            obj.callback.call(obj.context, FAILURE);
+            obj.callback.apply(obj.context, FAILURE);
           } else { // it's resolve
             obj.callback.call(obj.context);
           }

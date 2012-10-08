@@ -130,7 +130,7 @@ Finally, it's worth noting that the mapping you declare overrides direct matches
 
 With the separation of concerns between getting and using things that needs.js provides, it's possible (and advisable) to offload the getting of things to functions or libraries.
 
-	function getInfo() {
+	function getInfo() { // <-- your library method
       return new Needs('user', 'feed')
       .run(function(promise){
 	    $.ajax('/api/current_user', {

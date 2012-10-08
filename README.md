@@ -192,15 +192,15 @@ With the separation of concerns needs.js provides, it's possible (and advisable)
         }, this);
       }
     });
-    ...etc...
+    ...and similar for Backbone.Collection...
 
-Suddenly, building page views on asynchronous data fetches isn't very complicated at all.
+Suddenly, building page views on asynchronous data fetches isn't very complicated.
 
-    // somewhere in a route handler
-    new Needs('user', 'feed')
+    // in a route handler somewhere
+    new Needs('model', 'collection')
     .run(function(prom){
-      prom.take(new User({id:userId}).pfetch(), {'model':'user'})
-      prom.take(new Feed(null, {userId:userId}).pfetch(), {'collection':'feed'})
+      prom.take(new User({id:userId}).pfetch())
+      prom.take(new FeedItems(null, {userId:userId}).pfetch())
     })
     .onkeep(function(got){
       new UserFeedView({

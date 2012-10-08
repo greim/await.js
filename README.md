@@ -4,7 +4,7 @@
 
 needs.js is a variant of the promises pattern in asynchronous programming. With promises, you ask for a thing, and you get back an object with success and error events that you can listen on. In the body of your success event handler, you then have access to the thing you asked for. needs.js is the same way, but you ask for *multiple things*, and in the body of your success handler, you then have access to the *all the things*.
 
-needs.js exposes the `Needs` constructor, which creates a promise. You can then listen to *keep* and *fail* events on the promise.
+needs.js exposes the `Needs()` constructor, which creates a promise. You can then listen to *keep* and *fail* events on the promise.
 
     new Needs('noun1', 'noun2', 'adjective')
     .run(function(needs){
@@ -81,7 +81,7 @@ Chain `otherNeeds` into `needs`. `mapping` is an optional plain JS object servin
 ### `needs.timeout(milliseconds)`
 Sets a time limit in which this promise must keep before it automatically fails with a timeout error message.
 
-## Chainability
+## Chainability of promises
 
 Chainability is a key advantage of the Promise pattern, and needs.js has it. Here we've declared two sets of needs, and we want to "pump" the output of one into the other:
 
@@ -90,7 +90,9 @@ Chainability is a key advantage of the Promise pattern, and needs.js has it. Her
 
 What happens is that n1 can *take* n2.
 
-    n1.take(n2) // there's lots of code here that you didn't write
+    n1.take(n2) // There's lots of code here that you didn't write,
+                // hence this comment is here to take up some of
+                // the dead space.
 
 What about the fact that n1 has a different set of things than n2? Consider:
 
@@ -132,14 +134,14 @@ With the separation of concerns between getting and using things that needs.js p
 
 	function getInfo() { // <-- your library method
       return new Needs('user', 'feed')
-      .run(function(promise){
+      .run(function(needs){
 	    $.ajax('/api/current_user', {
-	      success: function(data){ promise.keep('user', data); },
-	      error: function(){ promise.fail('error fetching user'); }
+	      success: function(data){ needs.keep('user', data); },
+	      error: function(){ needs.fail('error fetching user'); }
 	    })
 	    $.ajax('/api/feed', {
-	      success: function(data){ promise.keep('feed', data); },
-	      error: function(){ promise.fail('error fetching feed'); }
+	      success: function(data){ needs.keep('feed', data); },
+	      error: function(){ needs.fail('error fetching feed'); }
 	    })
       })
 	}
@@ -199,8 +201,8 @@ The `run()` method just avoids depositing a variable in scope, provides a handy 
     .onkeep(function(){ alert('keep2') })
     .onfail(function(){ alert('fail2') })
 
-    // onfail, alert 'fail1' > 'resolve' > 'fail2'
-    // onkeep, alert 'keep1' > 'resolve' > 'keep2'
+    // onfail: alerts 'fail1' > 'resolve' > 'fail2'
+    // onkeep: alerts 'keep1' > 'resolve' > 'keep2'
 
 
 

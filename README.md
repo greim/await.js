@@ -115,36 +115,36 @@ Separation of concerns is the first casualty of the nested-callback hell that pl
 
 ## Chainability of promises
 
-Chainability is a key advantage of the Promise pattern, and needs.js has it. Here we've declared two sets of needs, and we want to "pump" the output of one into the other:
+Chainability is a key advantage of the promises. Here we've declared two sets of needs, and we want to suck the output of one into the other:
 
     n1 = new Needs('foo', 'bar', 'baz')
     n2 = new Needs('foo', 'bar', 'buz', 'qux')
 
 What happens is that n1 can *take* n2.
 
-    n1.take(n2) // There's lots of code here that you didn't write,
+    n1.take(n2) // There's lots of code here that never got written,
                 // hence this comment is here to take up some of
                 // the dead space.
 
-What about the fact that n1 has a different set of things than n2? Consider:
+What about the fact that n1 has a different set of things than n2? What happened in this case is:
 
-    n1      n2
+    n2      n1 
     ===========
-    foo <-- foo
-    bar <-- bar
-    baz     buz
-            qux
+    foo --> foo
+    bar --> bar
+    buz     baz
+    qux        
 
-In other words, n1 takes the intersection of itself with n2. That's easy enough to understand. But you can also further specify how `n2` gets mapped intp `n1` by giving a mapping object:
+In other words, n1 took the intersection of itself with n2. That's easy enough to understand. But you can also further specify how n2 gets mapped intp n1 by giving a mapping object:
 
     n1.take(n2, {'buz':'baz'})
 
-    n1      n2
+    n2      n1 
     ===========
-    foo <-- foo
-    bar <-- bar
-    baz <-- buz
-            qux
+    foo --> foo
+    bar --> bar
+    buz --> baz
+    qux        
 
 Finally, it's worth noting that the mapping you declare overrides direct matches. For example:
 
@@ -153,12 +153,12 @@ Finally, it's worth noting that the mapping you declare overrides direct matches
       'qux':'bar'
     })
 
-    n1      n2
+    n2      n1 
     ===========
-    foo <-- foo
-    bar <-- qux
-    baz <-- buz
-            bar
+    foo --> foo
+    qux --> bar
+    buz --> baz
+    bar        
 
 ## Libraryification
 

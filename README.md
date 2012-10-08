@@ -126,7 +126,7 @@ In the body of your success callback (the function passed to `onkeep()`), you *g
 
 ## Chainability of promises
 
-Chainability is a key advantage of the promises. Here we've declared two sets of needs, and we want to suck the output of one into the other:
+Chainability is a key advantage of promises. Here we've declared two sets of needs, and we want to suck the output of one into the other:
 
     n1 = new Needs('foo', 'bar', 'baz')
     n2 = new Needs('foo', 'bar', 'buz', 'qux')

@@ -66,7 +66,7 @@ Separation of concerns is the first casualty of the nested-callback hell that pl
   </thead>
   <tbody>
     <tr>
-      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">var needs = new Needs(thing1, thing2, ...)</td>
+      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">var needs =<br>new Needs(thing1, thing2, ..., thingN)</td>
       <td><strong>Constructor</strong>. Creates a new promise, which we've here named 'needs'. The <code>new</code> keyword is required. Accepts zero or more string arguments.</td>
       <td>new instance</td>
     </tr>

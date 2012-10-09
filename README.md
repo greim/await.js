@@ -70,7 +70,7 @@ To save typing, the above method calls can also be chained:
   <tbody>
     <tr>
       <td style="white-space: nowrap;font-family: monospace;font-size:90%;">var promise =<br>await(item1, item2, ... itemN)</td>
-      <td><strong>Factory function</strong>. Returns a multi-variable promise, with the idea that you want to await the fulfillment of this set of things before you consider the promise kept. The <code>new</code> keyword is disallowed, since this is a factory, not a constructor. Accepts zero or more string args.</td>
+      <td><strong>Factory function</strong>. Returns a promise, with the idea that you want to await the fulfillment of this set of things before you consider the promise kept. The <code>new</code> keyword is disallowed, since this is a factory, not a constructor. Accepts zero or more string args.</td>
       <td>promise</td>
     </tr>
     <tr>
@@ -80,7 +80,7 @@ To save typing, the above method calls can also be chained:
     </tr>
     <tr>
       <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.onkeep(callback[, context])</td>
-      <td>Calls <code>callback</code> when promise is fully kept. If the promise is already kept, <code>callback</code> runs immediately. <code>callback</code> is passed a map of all the items in the promise. If defined and not null, <code>context</code> will be <code>this</code> in <code>callback</code>.</td>
+      <td>Calls <code>callback</code> when every item of the promise is fulfilled. If the promise is already fulfilled, <code>callback</code> runs immediately. <code>callback</code> is passed a map of all the items in the promise, keyed by the strings passed to <code>await()</code>. If defined and not null, <code>context</code> will be <code>this</code> in <code>callback</code>.</td>
       <td>itself</td>
     </tr>
     <tr>

@@ -22,6 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+// MOCHA TESTS
+
 var assert = require("assert")
 var await = require('../await.js').await
 

@@ -76,7 +76,7 @@ To save typing and/or to encapsulate the promise variable, the above method call
     </tr>
     <tr>
       <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.run(callback[, context])</td>
-      <td>Runs <code>callback</code> immediately, which contains whatever promise fulfillment logic you want. <code>callback</code> is passed a reference to the promise. If defined and not null, <code>context</code> will be <code>this</code> in <code>callback</code>.</td>
+      <td>Runs <code>callback</code> immediately (synchronously), which contains whatever promise fulfillment logic you want. <code>callback</code> is passed a reference to the promise. If defined and not null, <code>context</code> will be <code>this</code> in <code>callback</code>.</td>
       <td>itself</td>
     </tr>
     <tr>
@@ -184,42 +184,13 @@ The `take()` method saves typing. Here's the equivalent chaining done manually:
     	p1.keep('baz', got.buz)
     })
 
-## Libraryification (Backbone.js example)
+## Library pattern
 
-With the separation of concerns await.js provides, it's possible (and advisable) to offload the getting of things to functions or libraries. You could, for example, extend the Backbone.js Model and Collection objects to have `pfetch` methods that return single-item promises for `model` and `collection`, respectively.
+The await.js library pattern is as follows:
 
-    _.extend(Backbone.Model.prototype, {
-      pfetch: function(opts){
-        return await('model')
-        .run(function(prom){
-          opts || (opts = {});
-          _.extend(opts, {
-            success: function(model){
-              prom.keep('model', model);
-            },
-            error: function(model, xhr){
-              prom.fail('error '+xhr.status, xhr);
-            }
-          });
-          this.fetch(opts);
-        }, this);
-      }
-    });
-    // and similar for Backbone.Collection...
+    return await(...).run(...)
 
-    ...
-
-    // meanwhile, in a route handler somewhere
-    await('model', 'collection')
-    .take(new User({id:userId}).pfetch())
-    .take(new Feed().pfetch())
-    .onkeep(function(got){
-      new UserFeedView({
-        el: '#content',
-        model: got.model,
-        collection: got.collection
-      }).render();
-    })
+In other words, libraries can use this pattern to return promises that other people can use. A couple of examples are provided in the `examples` subfolder of this project, including one for Backbone models and another for jQuery ajax.
 
 ## Picky details and incidentalities
 

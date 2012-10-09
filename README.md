@@ -6,7 +6,7 @@ await.js has no library dependencies, and runs in either browsers or in Node. "a
 
 ## Example
 
-An await.js promise is like a mad lib. There are several slots to fill, and when you fill them all, it's done. In fact, here's a mad lib using await.
+An await.js promise is like a mad lib. There are several slots to fill, and when you fill them all, it's done. Here's an asynchronous mad lib implemented using an await.js promise.
 
     var promise = await('noun1', 'noun2', 'adjective')
 

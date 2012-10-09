@@ -23,9 +23,10 @@ SOFTWARE.
 */
 
 // MOCHA TESTS
+// http://visionmedia.github.com/mocha/
 
 var assert = require("assert")
-var await = require('../await.js').await
+var await = require('../await').await
 
 describe('await', function(){
 
@@ -172,24 +173,19 @@ describe('await', function(){
       })
     })
 
-    it('should throw error with dupe keeps', function(){
-      var worked = false
-      try {
-        await('foo').keep('foo').keep('foo')
-      } catch (e) {
-        worked = true
-      }
-      assert.ok(worked);
+    it('should take first keep of dupe keeps', function(){
+      await('foo').keep('foo','x').keep('foo','y')
+      .onkeep(function(got){
+        assert.strictEqual(got.foo, 'x')
+      })
     })
 
-    it('should throw error with unknown keep', function(){
-      var worked = false
-      try {
-        await('foo').keep('bar')
-      } catch (e) {
-        worked = true
-      }
-      assert.ok(worked);
+    it('should not throw error with dupe keeps', function(){
+      await('foo').keep('foo').keep('foo')
+    })
+
+    it('should not throw error with unknown keep', function(){
+      await('foo').keep('bar')
     })
   })
 
@@ -277,18 +273,41 @@ describe('await', function(){
 
   // ###########################################################
 
-  describe('factory function', function(){
+  describe('#things()', function(){
 
-    it('should construct on an array', function(){
-      var worked = false
-      await(['foo','bar'])
-      .keep('foo')
-      .keep('bar')
-      .onkeep(function(){ worked = true })
-      assert.ok(worked)
+    it('should work for empty promises', function(){
+      var p = await();
+      assert.strictEqual(p.things().length, 0)
     })
 
-    it('should construct on strings', function(){
+    it('should work for single-item promises', function(){
+      var p = await('foo');
+      assert.strictEqual(p.things().join(), 'foo')
+    })
+
+    it('should work for multi-item promises', function(){
+      var p = await('foo','bar');
+      assert.ok(p.things().indexOf('foo') > -1)
+      assert.ok(p.things().indexOf('bar') > -1)
+      assert.ok(p.things().length === 2)
+    })
+
+    it('should work for grouped promises', function(){
+      var p1 = await('foo')
+      var p2 = await('bar')
+      var p = await(p1,p2,'baz')
+      assert.ok(p.things().indexOf('foo') > -1)
+      assert.ok(p.things().indexOf('bar') > -1)
+      assert.ok(p.things().indexOf('baz') > -1)
+      assert.ok(p.things().length === 3)
+    })
+  })
+
+  // ###########################################################
+
+  describe('factory function', function(){
+
+    it('should use series of strings', function(){
       var worked = false
       await('foo','bar')
       .keep('foo')
@@ -310,6 +329,41 @@ describe('await', function(){
       try { new await() }
       catch (err) { worked = true }
       assert.ok(worked)
+    })
+
+    it('should accept other promises', function(done){
+      var p1 = await('foo','bar').keep('foo','bar')
+      var p2 = await('baz').keep('baz')
+      await(p1, p2, 'qux').keep('qux')
+      .onkeep(function(got){
+        assert.ok(got.hasOwnProperty('foo'))
+        assert.ok(got.hasOwnProperty('bar'))
+        assert.ok(got.hasOwnProperty('baz'))
+        assert.ok(got.hasOwnProperty('qux'))
+      })
+
+      var p1 = await('foo','bar')
+      var p2 = await('baz')
+      await(p1, p2, 'qux')
+      .run(function(prom){
+        setTimeout(function(){
+          p1.keep('foo')
+          p1.keep('bar')
+          p2.keep('baz')
+          prom.keep('qux')
+        },10)
+      })
+      .onkeep(function(got){
+        try {
+          assert.ok(got.hasOwnProperty('foo'))
+          assert.ok(got.hasOwnProperty('bar'))
+          assert.ok(got.hasOwnProperty('baz'))
+          assert.ok(got.hasOwnProperty('qux'))
+          done()
+        } catch(err) {
+          done(err)
+        }
+      })
     })
   })
 
@@ -390,23 +444,39 @@ describe('await', function(){
       })
     })
 
-    it('should accept all data types', function(){
+    it('should pass through all data types', function(){
       await(
         'string',
         'number',
         'boolean',
         'object',
         'function'
-      ).run(function(prom){
-        prom.keep('string', '');
-        prom.keep('number', 0);
-        prom.keep('boolean', false);
-        prom.keep('object', {});
-        prom.keep('function', function(){});
-      })
+      )
+      .keep('string', '')
+      .keep('number', 0)
+      .keep('boolean', false)
+      .keep('object', {})
+      .keep('function', function(){})
       .onkeep(function(got){
         Object.keys(got).forEach(function(type){
-          assert.strictEqual(type, typeof got[type], type+' not equal to got type')
+          assert.strictEqual(type, typeof got[type])
+        })
+      })
+      await(
+        'string',
+        'number',
+        'boolean',
+        'object',
+        'function'
+      )
+      .keep('string', 'sdf')
+      .keep('number', 1)
+      .keep('boolean', true)
+      .keep('object', {foo:function(){}})
+      .keep('function', function(){})
+      .onkeep(function(got){
+        Object.keys(got).forEach(function(type){
+          assert.strictEqual(type, typeof got[type])
         })
       })
     })

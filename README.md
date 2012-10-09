@@ -1,20 +1,22 @@
 # await.js: easy promises
 
-await.js aims to present a no-nonsense promise API. Promises in await.js are simple. You ask for set of things, and you get back an object that emits *keep* and *fail* events. In your *keep* event handler, you then have access to the all the things.
+await.js aims to be a no-nonsense promise API. Promises in await.js are simple. You ask for set of things, and you get back an object with *keep* and *fail* events. In your *keep* event handler, you then have access to the all the things.
 
-await.js has no library dependencies, and runs in either browsers or in Node. "await" was inspired by [IcedCoffeeScript](http://maxtaco.github.com/coffee-script/), wich is an amazing idea that's worth checking out. **Old browser note**: you'll need some polyfill goodness to get it to work in browsers that don't support JavaScript 1.8.5. AKA IE8 and lower. To that end, an `example-polyfills.js` file is included in this project. The polyfills file has no test coverage, and is otherwise purely optional.
+await.js has no library dependencies, and runs in either browsers or in Node. "await" was inspired by [IcedCoffeeScript](http://maxtaco.github.com/coffee-script/), wich is a concept worth checking out.
 
-## Example
+*Old browser note*: you'll need some polyfill goodness to get it to work in browsers that don't support JavaScript 1.8.5. AKA IE8 and lower. To that end, an `example-polyfills.js` file is included in this project. The polyfills file has no test coverage, and is otherwise purely optional.
 
-An await.js promise is like a mad lib. There are several slots to fill, and when you fill them all, it's done. Here's an asynchronous mad lib implemented using an await.js promise.
+## It's like mad libs
 
-    var promise = await('noun1', 'noun2', 'adjective')
+await.js is like mad libs. There are several named slots to fill, and when you fill them all, it's done. Here's an asynchronous mad lib implemented using an await.js promise.
 
-    setTimeout(function(){ promise.keep('noun1', 'horse') }, 1000)
-    setTimeout(function(){ promise.keep('noun2', 'apple') }, 4000)
-    setTimeout(function(){ promise.keep('adjective', 'happy') }, 2000)
+    var prom = await('noun1', 'noun2', 'adjective')
 
-    promise.onkeep(function(got){
+    setTimeout(function(){ prom.keep('noun1', 'horse') }, 1000)
+    setTimeout(function(){ prom.keep('noun2', 'apple') }, 4000)
+    setTimeout(function(){ prom.keep('adjective', 'happy') }, 2000)
+
+    prom.onkeep(function(got){
       console.log(
       	"The %s eats the %s and is %s.",
       	got.noun1,
@@ -24,37 +26,58 @@ An await.js promise is like a mad lib. There are several slots to fill, and when
       // "The horse eats the apple and is happy."
     })
 
+The *keep* event won't fire until all of the slots are filled. Your code needn't worry about whether that happens immediately, or whether it happens ten minutes in the future.
+
 ## Benefit: separation of concerns
 
 Separation of concerns is the first casualty of the nested-callback hell that plagues asynchronous JavaScript. It's nice to have an approach that lets you maintain some semblance of order.
 
     // I need things
-    var promise = await('user', 'feed')
+    var prom = await('user', 'feed')
+
+    // --------------------------------------
 
     // here's how I'll worry about getting them
     $.ajax('/api/current_user', {
-      success: function(data){
-        promise.keep('user', data);
-      }
+      success: function(data){ prom.keep('user', data) },
+      error: function(xhr){ prom.fail('error ' + xhr.status) }
     })
     $.ajax('/api/feed', {
-      success: function(data){
-        promise.keep('feed', data);
-      }
+      success: function(data){ prom.keep('feed', data) }
+      error: function(xhr){ prom.fail('error ' + xhr.status) }
     })
-
+    
+    // --------------------------------------
+    
     // here's how I'll worry about using them
     promise.onkeep(function(got){
       alert('success!')
       alert(got.user)
       alert(got.feed)
     })
+    
+    // --------------------------------------
+    
+    // here's how I'll worry about error handling
+    promise.onfail(function(message){
+      alert('error!')
+      alert(message)
+    })
+    
+    // --------------------------------------
+    
+    // here's what i'll do in any case
+    promise.onresolve(function(){
+      alert('all done!')
+    })
 
-To save typing and/or to encapsulate the promise variable, the above method calls can also be chained:
+To save typing and/or to encapsulate the promise variable, you can use the `run()` method, and chained all the method calls together:
 
     await('user', 'feed')
-    .run(function(promise){ ... })
-    .onkeep(function(got){ ... })
+    .run(function(promise){ ...provisioning code... })
+    .onkeep(function(got){ ...consumer code... })
+    .onfail(function(message){ ...error handling code... })
+    .onresolve(function(){ ...resolution code... })
 
 # Usage
 
@@ -71,7 +94,7 @@ To save typing and/or to encapsulate the promise variable, the above method call
   <tbody>
     <tr>
       <td style="white-space: nowrap;font-family: monospace;font-size:90%;">var promise =<br>await(item1, item2, ... itemN)</td>
-      <td><strong>Factory function</strong>. Returns a promise, with the idea that you want to await the fulfillment of this set of things before you consider the promise kept. The <code>new</code> keyword is disallowed, since this is a factory, not a constructor. Accepts zero or more string args.</td>
+      <td><strong>Factory function</strong>. Returns a promise, with the idea that you want to <em>await</em> the fulfillment of this set of things before you consider the promise kept. The <code>new</code> keyword is disallowed, since this is a factory, not a constructor. Accepts zero or more args which can be strings or other promises, which allows grouping. Order of arguments is unimportant.</td>
       <td>promise</td>
     </tr>
     <tr>
@@ -81,7 +104,7 @@ To save typing and/or to encapsulate the promise variable, the above method call
     </tr>
     <tr>
       <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.onkeep(callback[, context])</td>
-      <td>Calls <code>callback</code> when every item of the promise is fulfilled. If the promise is already fulfilled, <code>callback</code> runs immediately. <code>callback</code> is passed a map of all the items in the promise, keyed by the strings passed to <code>await()</code>. If defined and not null, <code>context</code> will be <code>this</code> in <code>callback</code>.</td>
+      <td>Calls <code>callback</code> when every item of the promise is fulfilled. If the promise is already fulfilled, <code>callback</code> runs immediately. <code>callback</code> is passed a map of all the things in the promise, keyed by the strings passed to <code>await()</code>. If defined and not null, <code>context</code> will be <code>this</code> in <code>callback</code>.</td>
       <td>itself</td>
     </tr>
     <tr>
@@ -96,7 +119,7 @@ To save typing and/or to encapsulate the promise variable, the above method call
     </tr>
     <tr>
       <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.keep(item[, data])</td>
-      <td>Fulfills one of the items of this promise. <code>data</code> is optional and if not defined, defaults to <code>null</code>.</td>
+      <td>Fulfills one of the things of this promise. <code>data</code> is optional and if not defined, defaults to <code>null</code>.</td>
       <td>itself</td>
     </tr>
     <tr>
@@ -109,23 +132,34 @@ To save typing and/or to encapsulate the promise variable, the above method call
       <td>Set up a dependency chain so that <code>promise</code> depends on <code>otherPromise</code>. <code>map</code> is optional and provides custom mapping from <code>otherPromise</code> to <code>promise</code>. The dependency is such that if <code>otherPromise</code> fails, </code>promise</code> fails.</td>
       <td>itself</td>
     </tr>
+    <tr>
+      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.things()</td>
+      <td>Retrieve a list of things this promise is awaiting.</td>
+      <td>array</td>
+    </tr>
   </tbody>
 </table>
 
-## Error handling
+## Grouping promises
 
-Error handling is accomplished via the `fail()` and `onfail()` methods. The nice thing about these is that whatever you pass to `fail()` is what the `onfail()` callback receives. By convention the first argument should be a description string, but subsequent arguments can be `XMLHttpRequest` objects, exceptions objects, debugging info, whatever.
+For convenience, `await()` can also accept other promises instead of strings, or a mix of both. In such cases, the newly-created promise is the *union* of all grouped promises, plus any string parameters.
 
-    await()
-    .fail('fake failure', 1, 2, 3)
-    .onfail(function(){
-      alert([].slice.call(arguments).join(','))
-      // "fake failure,1,2,3"
+    p1 = await('foo', 'bar')
+    p2 = await('baz')
+    p3 = await(p1, p2, 'qux')
+
+    ...
+
+    p3.onkeep(function(got){
+      // do something with got.foo
+      // do something with got.bar
+      // do something with got.baz
+      // do something with got.qux
     })
 
-## Chainability of promises
+## Chaining promises
 
-Chainability is a nice advantage of promises. Here we've declared two promises, and we want to suck the output from one to the other:
+Promises can be explicitly chained instead of grouped. Here we've declared two promises, and we want to suck the output from one to the other:
 
     p1 = await('foo', 'bar', 'baz')
     p2 = await('foo', 'bar', 'buz', 'qux')
@@ -150,7 +184,7 @@ p1 now takes p2, and if p2 fails, p1 fails. But what about the fact that p1 has 
     buz     baz
     qux        
 
-In other words, p1 took the intersection of itself with p2. That's easy enough to understand. But you can also further specify how p2 gets mapped intp p1 by giving a mapping object:
+In other words, p1 took the *intersection* of itself with p2. That's easy enough to understand. But you can also further specify how p2 gets mapped intp p1 by giving a mapping object:
 
     p1.take(p2, {'buz':'baz'})
 
@@ -175,13 +209,24 @@ Also, it's worth noting that if the mapping you declare conflicts with direct ma
     buz --> baz
     bar        
 
-The `take()` method saves typing. Here's the equivalent chaining done manually:
+Just for comparison, here's the equivalent chaining done manually:
 
     p2.onfail(p1.fail)
     p2.onkeep(function(got){
     	p1.keep('foo', got.foo)
     	p1.keep('bar', got.qux)
     	p1.keep('baz', got.buz)
+    })
+
+## Error handling
+
+Error handling is accomplished via the `fail()` and `onfail()` methods. The string error message passed to `fail()` is what the `onfail()` callback receives. Any subsequent arguments passed to `fail()` are also applied to the `onfail()` callback, which is useful for debugging, etc.
+
+    await()
+    .fail('fake failure', 1, 2, 3)
+    .onfail(function(){
+      alert([].slice.call(arguments).join(','))
+      // "fake failure,1,2,3"
     })
 
 ## Library pattern

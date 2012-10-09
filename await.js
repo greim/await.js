@@ -28,23 +28,23 @@ SOFTWARE.
 (function(){
 
   // ########################################################################
-  // CHAPTER 1 - DECLARATION
+  // INTRODUCTION - CLOSURE SCOPE VARS
 
   var slice = [].slice;
+  function Promise(){}
 
   // this is the function exported
   var _await = function(){
 
+    // ########################################################################
+    // CHAPTER 1 - VARIABLE DECLARATION
+
+    var ARGS = slice.call(arguments);
+
     /*
     Using convention of uppercase names for vars scoped to _await()
     */
-    var PROMISE = {};
-
-    if (this instanceof _await) {
-      throw new Error("Must not use 'new' keyword.");
-    }
-
-    var ARGS = slice.call(arguments);
+    var PROMISE = new Promise();
 
     /*
     Keep track of things this promise needs,
@@ -53,31 +53,15 @@ SOFTWARE.
     var SLOTS = {};
 
     /*
-    Optionally support construction on an array:
-        _await(['foo','bar','baz'])
+    This keeps track of any pieces of data that the user of this API
+    is collecting via this promise.
     */
-    if (ARGS.length === 1 && typeof ARGS[0].join === 'function') {
-      ARGS = ARGS[0];
-    }
-
-    /*
-    Otherwise, support construction on a series of string params:
-        _await('foo','bar','baz')
-    */
-    ARGS.forEach(function(arg){
-      SLOTS[arg] = false;
-    });
+    var GOT = {};
 
     /*
     The ALLBACKS array contains keep, fail and resolve callbacks.
     */
     var ALLBACKS = [];
-
-    /*
-    The kept status of this promise. If truthy, the promise has been kept.
-    Empty promises are considered automatically kept.
-    */
-    var SUCCESS = !Object.keys(SLOTS).length;
 
     /*
     The failure status of this promise. If truthy, the promise has been
@@ -86,10 +70,10 @@ SOFTWARE.
     var FAILURE = false;
 
     /*
-    This keeps track of any pieces of data that the user of this API
-    is collecting via this promise.
+    The kept status of this promise. If truthy, the promise has been kept.
+    Empty promises are considered automatically kept.
     */
-    var GOT = {};
+    var SUCCESS = false;
 
     // ########################################################################
     // CHAPTER 2 - RUNNING
@@ -159,10 +143,12 @@ SOFTWARE.
     */
     PROMISE.keep = function(name, data){
       if (GOT[name] !== undefined){
-        throw new Error('"'+name+'" can only be kept once on promise.');
+        return PROMISE;
+        //throw new Error('"'+name+'" can only be kept once on promise.');
       }
       if (SLOTS[name] === undefined) {
-        throw new Error('"'+name+'" is not promised.');
+        return PROMISE;
+        //throw new Error('"'+name+'" is not promised.');
       }
       if (!FAILURE && !SUCCESS){
         if (data === undefined) {
@@ -245,6 +231,32 @@ SOFTWARE.
       });
       return PROMISE;
     };
+    PROMISE.things = function(){
+      return Object.keys(SLOTS);
+    };
+
+    // ########################################################################
+    // CHAPTER 6 - INITIALIZE
+
+    if (this instanceof _await) {
+      throw new Error("Must not use 'new' keyword.");
+    }
+
+    /*
+    Optionally take other promises.
+    */
+    ARGS.forEach(function(arg){
+      if (arg instanceof Promise) {
+        arg.things().forEach(function(item){
+          SLOTS[item] = false;
+        });
+        PROMISE.take(arg);
+      } else {
+        SLOTS[arg] = false;
+      }
+    });
+
+    SUCCESS = !Object.keys(SLOTS).length;
 
     return PROMISE;
   };
@@ -261,9 +273,6 @@ SOFTWARE.
   try {
     exports.await = _await;
   } catch(err) {}
-
-  // ########################################################################
-  // IT'S OVER!
 
 })();
 

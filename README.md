@@ -1,20 +1,20 @@
 # await.js: easy promises
 
-await.js aims to be a no-nonsense promise API. Promises in await.js are simple. You ask for set of things, and you get back an object with *keep* and *fail* events. In your *keep* event handler, you then have access to the all the things.
+await.js de-mystifies asynchronous programming by providing a no-nonsense promises API. Promises in await.js are simple. You ask for a set of things, and you get back an object with *keep* and *fail* events. In your *keep* event handler, you then have access to the all the things.
 
 await.js has no library dependencies, and runs in either browsers or in Node. "await" was inspired by [IcedCoffeeScript](http://maxtaco.github.com/coffee-script/), wich is a concept worth checking out.
 
-*Old browser note*: you'll need some polyfill goodness to get it to work in browsers that don't support JavaScript 1.8.5. AKA IE8 and lower. To that end, an `example-polyfills.js` file is included in this project. The polyfills file has no test coverage, and is otherwise purely optional.
+*Old browser note* - you'll need some polyfill goodness to get it to work in browsers that don't support JavaScript 1.8.5. (e.g. IE8 and lower). To that end, `example-polyfills.js` is included in this project. The polyfills file has no test coverage, and is otherwise purely optional.
 
-## It's like mad libs
+## Mad libs
 
-await.js is like mad libs. There are several named slots to fill, and when you fill them all, it's done. Here's an asynchronous mad lib implemented using an await.js promise.
+await.js is like mad libs. Consider this mad lib which is implemented using an await.js promise.
 
     var prom = await('noun1', 'noun2', 'adjective')
 
-    setTimeout(function(){ prom.keep('noun1', 'horse') }, 1000)
-    setTimeout(function(){ prom.keep('noun2', 'apple') }, 4000)
-    setTimeout(function(){ prom.keep('adjective', 'happy') }, 2000)
+    prom.keep('noun1', 'horse')
+    prom.keep('noun2', 'apple')
+    prom.keep('adjective', 'happy')
 
     prom.onkeep(function(got){
       console.log(
@@ -26,13 +26,13 @@ await.js is like mad libs. There are several named slots to fill, and when you f
       // "The horse eats the apple and is happy."
     })
 
-The *keep* event won't fire until all of the slots are filled. Your code needn't worry about whether that happens immediately, or whether it happens ten minutes in the future.
+The *keep* event won't fire until it has all the things. Here they were gotten synchronously, but getting them asynchronously (via ajax or setTimeout) would have worked too. Imagine if a setTimeout were wrapped around all the prom.keeps in the above code.
 
 ## Benefit: separation of concerns
 
-Separation of concerns is the first casualty of the nested-callback hell that plagues asynchronous JavaScript. It's nice to have an approach that lets you maintain some semblance of order.
+Separation of concerns is the first casualty of the nested-callback hell that plagues asynchronous JavaScript. It's nice to have an approach that lets you maintain some semblance of order. Here's a fuller example of await.js in action.
 
-    // I need things
+    // I need some things
     var prom = await('user', 'feed')
 
     // --------------------------------------
@@ -71,7 +71,7 @@ Separation of concerns is the first casualty of the nested-callback hell that pl
       alert('all done!')
     })
 
-To save typing and/or to encapsulate the promise variable, you can use the `run()` method, and chained all the method calls together:
+To save typing and/or to encapsulate the promise variable, you can use the `run()` method, and just chain all the method calls together:
 
     await('user', 'feed')
     .run(function(promise){ ...provisioning code... })
@@ -239,11 +239,11 @@ In other words, libraries can use this pattern to return promises that other peo
 
 ## Picky details and incidentalities
 
-`await()` can also build on arrays, all other rules being the same.
+For convenience, all methods that take callbacks also take a second context arg.
 
-    // these are the same
-    await('foo', 'bar', 'baz')
-    await(['foo', 'bar', 'baz'])
+    await().onkeep(function(){
+      // this this is now that this
+    }, this)
 
 Empty promises are legal and keep immediately.
 
@@ -257,9 +257,9 @@ Empty promises are legal and keep immediately.
     await({}) // {} is converted to string, but it's legal
               // you'd just have to say promise.keep("[object Object]")!
 
-There's nothing magical about `promise.run()`. It just runs the given function, passing itself to the callback, and also returning itself for chainability.
+There's nothing magical about `promise.run()`. It just runs the given function, passing itself to the callback, and returning itself for chainability.
 
-	var refB
+    var refB
     var refA = await().run(function(promise){
       refB = promise
     })

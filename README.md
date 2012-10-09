@@ -70,7 +70,7 @@ To save typing, the above method calls can also be chained:
   <tbody>
     <tr>
       <td style="white-space: nowrap;font-family: monospace;font-size:90%;">var promise =<br>await(item1, item2, ... itemN)</td>
-      <td><strong>Factory function</strong>. Returns a new multi-var promise. The <code>new</code> keyword is disallowed, since this is a factory, not a constructor. Accepts zero or more string args.</td>
+      <td><strong>Factory function</strong>. Returns a multi-variable promise, with the idea that you want to await the fulfillment of this set of things before you consider the promise kept. The <code>new</code> keyword is disallowed, since this is a factory, not a constructor. Accepts zero or more string args.</td>
       <td>promise</td>
     </tr>
     <tr>

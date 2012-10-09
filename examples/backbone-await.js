@@ -22,6 +22,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+/*
+Backbone models have asynchronous methods fetch(), save(), and destroy().
+Here's an example of extending them with similar, promise-returning methods,
+called pfetch(), psave(), and pdestroy().
+*/
+
 (function(){
 
   function extendOpts(opts, promise, type){

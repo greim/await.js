@@ -1,0 +1,9 @@
+{
+    "name": "await"
+  , "version": "0.1"
+  , "description": "easy promises"
+  , "keywords": ["promises", "futures", "deferreds", "asynchronous"]
+  , "author": "Greg Reimer <gregreimer@gmail.com>"
+  , "repository": { "type": "git", "url": "git://github.com/greim/await.js.git" }
+  , "main": "./await.js"
+}

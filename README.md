@@ -124,29 +124,29 @@ Error handling is accomplished via the `fail()` and `onfail()` methods. The nice
 
 ## Chainability of promises
 
-Chainability is a nice advantage of promises. Here we've declared two multi-var promises, and we want to suck the output from one to the other:
+Chainability is a nice advantage of promises. Here we've declared two promises, and we want to suck the output from one to the other:
 
-    n1 = await('foo', 'bar', 'baz')
-    n2 = await('foo', 'bar', 'buz', 'qux')
+    p1 = await('foo', 'bar', 'baz')
+    p2 = await('foo', 'bar', 'buz', 'qux')
 
-What happens is that n1 can *take* n2.
+What happens is that p1 can *take* p2.
 
-    n1.take(n2)
+    p1.take(p2)
 
-n1 now takes n2, and if n2 fails, n1 fails. But what about the fact that n1 has a different set of things than n2? What happened in this case is:
+p1 now takes p2, and if p2 fails, p1 fails. But what about the fact that p1 has a different set of things than p2? What happened in this case is:
 
-    n2      n1 
+    p2      p1 
     ===========
     foo --> foo
     bar --> bar
     buz     baz
     qux        
 
-In other words, n1 took the intersection of itself with n2. That's easy enough to understand. But you can also further specify how n2 gets mapped intp n1 by giving a mapping object:
+In other words, p1 took the intersection of itself with p2. That's easy enough to understand. But you can also further specify how p2 gets mapped intp p1 by giving a mapping object:
 
-    n1.take(n2, {'buz':'baz'})
+    p1.take(p2, {'buz':'baz'})
 
-    n2      n1 
+    p2      p1 
     ===========
     foo --> foo
     bar --> bar
@@ -155,12 +155,12 @@ In other words, n1 took the intersection of itself with n2. That's easy enough t
 
 Also, it's worth noting that if the mapping you declare conflicts with direct matches, the mapping wins. For example:
 
-    n1.take(n2, {
+    p1.take(p2, {
       'buz':'baz',
       'qux':'bar'
     })
 
-    n2      n1 
+    p2      p1 
     ===========
     foo --> foo
     qux --> bar
@@ -169,11 +169,11 @@ Also, it's worth noting that if the mapping you declare conflicts with direct ma
 
 The `take()` method saves typing. Here's the equivalent chaining done manually:
 
-    n2.onfail(n1.fail)
-    n2.onkeep(function(got){
-    	n1.keep('foo', got.foo)
-    	n1.keep('bar', got.qux)
-    	n1.keep('baz', got.buz)
+    p2.onfail(p1.fail)
+    p2.onkeep(function(got){
+    	p1.keep('foo', got.foo)
+    	p1.keep('bar', got.qux)
+    	p1.keep('baz', got.buz)
     })
 
 ## Libraryification (Backbone.js example)

@@ -1,5 +1,5 @@
 // ########################################################################
-// PROLOGUE
+// PROLOGUE - LICENSE
 
 /*
 Copyright (c) 2012 by Greg Reimer
@@ -32,15 +32,16 @@ SOFTWARE.
 
   var slice = [].slice;
 
-  var Promise = function(){
+  // this is the function exported
+  var _await = function(){
 
     /*
-    Using convention of uppercase names for vars scoped to Promise()
+    Using convention of uppercase names for vars scoped to _await()
     */
-    var PROMISE = this;
+    var PROMISE = {};
 
-    if (!(PROMISE instanceof Promise)) {
-      throw new Error("Must use 'new' keyword.");
+    if (this instanceof _await) {
+      throw new Error("Must not use 'new' keyword.");
     }
 
     var ARGS = slice.call(arguments);
@@ -53,7 +54,7 @@ SOFTWARE.
 
     /*
     Optionally support construction on an array:
-        new Promise(['foo','bar','baz'])
+        _await(['foo','bar','baz'])
     */
     if (ARGS.length === 1 && typeof ARGS[0].join === 'function') {
       ARGS = ARGS[0];
@@ -61,7 +62,7 @@ SOFTWARE.
 
     /*
     Otherwise, support construction on a series of string params:
-        new Promise('foo','bar','baz')
+        _await('foo','bar','baz')
     */
     ARGS.forEach(function(arg){
       SLOTS[arg] = false;
@@ -98,7 +99,6 @@ SOFTWARE.
     and then returning that same instance.
     */
     PROMISE.run = function(cb, ctx){
-      ctx = ctx || window;
       cb.call(ctx, PROMISE);
       return PROMISE;
     };
@@ -110,7 +110,6 @@ SOFTWARE.
       if (typeof cb !== 'function') {
         throw new Error('No callback provided.');
       }
-      ctx = ctx || window;
 
       /*
       NOTE: It's possible for both SUCCESS and FAILURE to be
@@ -216,39 +215,6 @@ SOFTWARE.
     // ########################################################################
     // CHAPTER 5 - CHAINING
 
-    /*
-    p1 = new Promise('foo', 'bar', 'baz')
-    p2 = new Promise('foo', 'bar', 'buz', 'qux')
-
-    p1.take(p2)
-
-    p1      p2
-    ===========
-    foo <-- foo
-    bar <-- bar
-    baz     buz
-            qux
-
-    p1.take(p2, {'buz':'baz'})
-
-    p1      p2
-    ===========
-    foo <-- foo
-    bar <-- bar
-    baz <-- buz
-            qux
-
-    p1.take(p2, {'qux':'bar','buz':'baz'})
-
-    p1      p2
-    ===========
-    foo <-- foo
-    bar <-- qux
-    baz <-- buz
-            bar
-
-    */
-
     PROMISE.take = function(p2, map){
       p2.onfail(PROMISE.fail);
       p2.onkeep(function(got){
@@ -276,20 +242,22 @@ SOFTWARE.
       });
       return PROMISE;
     };
+
+    return PROMISE;
   };
 
   // ########################################################################
   // CONCLUSION
 
   // for browsers
-  if (window) {
-    window.Needs = Promise;
-  }
+  try {
+    window.await = _await;
+  } catch(err) {}
 
   // for node
-  if (exports) {
-    exports.Needs = Promise;
-  }
+  try {
+    exports.await = _await;
+  } catch(err) {}
 
   // ########################################################################
   // IT'S OVER!

@@ -10,11 +10,9 @@ An await.js promise is like a mad lib. There are several slots to fill, and when
 
     var promise = await('noun1', 'noun2', 'adjective')
 
-    promise.run(function(promise){
-      setTimeout(function(){ promise.keep('noun1', 'horse') }, 1000)
-      setTimeout(function(){ promise.keep('noun2', 'apple') }, 4000)
-      setTimeout(function(){ promise.keep('adjective', 'happy') }, 2000)
-    })
+    setTimeout(function(){ promise.keep('noun1', 'horse') }, 1000)
+    setTimeout(function(){ promise.keep('noun2', 'apple') }, 4000)
+    setTimeout(function(){ promise.keep('adjective', 'happy') }, 2000)
 
     promise.onkeep(function(got){
       console.log(
@@ -34,16 +32,15 @@ Separation of concerns is the first casualty of the nested-callback hell that pl
     var promise = await('user', 'feed')
 
     // here's how I'll worry about getting them
-    promise.run(function(){
-	  $.ajax('/api/current_user', {
-	    success: function(data){
-	      promise.keep('user', data);
-	    }
-	  })
-	  $.ajax('/api/feed', {
-	    success: function(data){
-	      promise.keep('feed', data);
-	    }
+    $.ajax('/api/current_user', {
+      success: function(data){
+        promise.keep('user', data);
+      }
+    })
+    $.ajax('/api/feed', {
+      success: function(data){
+        promise.keep('feed', data);
+      }
     })
 
     // here's how I'll worry about using them
@@ -53,7 +50,7 @@ Separation of concerns is the first casualty of the nested-callback hell that pl
       alert(got.feed)
     })
 
-To save typing, the above method calls can also be chained:
+To save typing and/or to encapsulate the promise variable, the above method calls can also be chained:
 
     await('user', 'feed')
     .run(function(promise){ ... })

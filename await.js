@@ -216,6 +216,9 @@ SOFTWARE.
     // CHAPTER 5 - CHAINING
 
     PROMISE.take = function(p2, map){
+      if (SUCCESS || FAILURE) {
+        return PROMISE;
+      }
       p2.onfail(PROMISE.fail);
       p2.onkeep(function(got){
         var taken = {}, gotItems = Object.keys(got);

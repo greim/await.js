@@ -129,6 +129,13 @@ Chainability is a nice advantage of promises. Here we've declared two promises, 
     p1 = await('foo', 'bar', 'baz')
     p2 = await('foo', 'bar', 'buz', 'qux')
 
+    p2      p1 
+    ===========
+    foo     foo
+    bar     bar
+    buz     baz
+    qux        
+
 What happens is that p1 can *take* p2.
 
     p1.take(p2)

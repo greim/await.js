@@ -188,7 +188,7 @@ describe('await', function(){
   describe('#take()', function(){
 
     it('should be chainable', function(){
-      var fakePromise = await();
+      var fakePromise = await('foo');
       var ref1 = await();
       var ref2 = ref1.take(fakePromise);
       assert.strictEqual(ref1, ref2)

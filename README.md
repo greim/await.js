@@ -1,20 +1,18 @@
-# await.js: Multi-variable promises for asynchronous JavaScript
+# await.js: Simple promises
 
-await.js has no library dependencies and runs in browsers or in Node, without any special configuration. The word "await" was inspired by [IcedCoffeeScript](http://maxtaco.github.com/coffee-script/), wich is an amazing idea and everybody should check it out. **Old browser note**: you'll need some polyfill goodness to get it to work in browsers that don't support JavaScript 1.8.5. AKA IE8 and lower. To that end, an example example-polyfills.js file is included in this project. example-polyfills.js experimental, has no test coverage, and is otherwise purely optional.
+await.js has no library dependencies, and runs in either browsers or in Node. The word "await" was inspired by [IcedCoffeeScript](http://maxtaco.github.com/coffee-script/), wich is an amazing idea that's worth checking out. **Old browser note**: you'll need some polyfill goodness to get it to work in browsers that don't support JavaScript 1.8.5. AKA IE8 and lower. To that end, an example example-polyfills.js file is included in this project. example-polyfills.js experimental, has no test coverage, and is otherwise purely optional.
 
-## What are multi-variable promises?
+await.js aims to present a no-nonsense promise API. Promises in await.js are simple. You ask for set of things, and you get back an object that emits *keep* and *fail* events. In your *keep* event handler, you then have access to the all the things.
 
-With regular promises, you ask for a thing, and you get back an object with success and error events that you can set listeners on. In the body of your success event handler, you then have access to the thing you asked for. await.js is the same way, but you ask for *multiple things*, and in the body of your success handler, you then have access to the *all the things*.
+    var promise = await('noun1', 'noun2', 'adjective')
 
-await.js exposes the `await()` factory function, which returns a promise. You can then listen to *keep* and *fail* events on the promise.
-
-    await('noun1', 'noun2', 'adjective')
-    .run(function(promise){
+    promise.run(function(promise){
       setTimeout(function(){ promise.keep('noun1', 'horse') }, 1000)
       setTimeout(function(){ promise.keep('noun2', 'apple') }, 4000)
       setTimeout(function(){ promise.keep('adjective', 'happy') }, 2000)
     })
-    .onkeep(function(got){
+
+    promise.onkeep(function(got){
       console.log(
       	"The %s eats the %s and is %s.",
       	got.noun1,
@@ -24,15 +22,15 @@ await.js exposes the `await()` factory function, which returns a promise. You ca
       // "The horse eats the apple and is happy."
     })
 
-## What is it for? Separation of concerns.
+## Benefit: separation of concerns
 
-Separation of concerns is the first casualty of the nested-callback hell that plagues asynchronous JavaScript. It's nice when code doesn't force you to worry about lots of things at the same time.
+Separation of concerns is the first casualty of the nested-callback hell that plagues asynchronous JavaScript. It's nice to have an approach that lets you maintain some semblance of order.
 
     // I need things
-    await('user', 'feed')
+    var promise = await('user', 'feed')
 
     // here's how I'll worry about getting them
-    .run(function(promise){
+    promise.run(function(){
 	  $.ajax('/api/current_user', {
 	    success: function(data){
 	      promise.keep('user', data);
@@ -45,11 +43,17 @@ Separation of concerns is the first casualty of the nested-callback hell that pl
     })
 
     // here's how I'll worry about using them
-    .onkeep(function(got){
+    promise.onkeep(function(got){
       alert('success!')
       alert(got.user)
       alert(got.feed)
     })
+
+To save typing, the above method calls can be chained:
+
+    await('user', 'feed')
+    .run(function(promise){ ... })
+    .onkeep(function(got){ ... })
 
 # Usage
 
@@ -107,40 +111,27 @@ Separation of concerns is the first casualty of the nested-callback hell that pl
   </tbody>
 </table>
 
-## Got
-
-In the body of your success callback (the function passed to `onkeep()`), you *got* all the things you need. All you need to worry about is what to do with it.
-
-    // I need a bar of soap and forty tons of fill dirt
-    await('a bar of soap', '40 tons of fill dirt')
-    .onkeep(function(got){
-      // do something with got['a bar of soap']
-      // do something with got['40 tons of fill dirt']
-    })
-
 ## Error handling
 
-Error handling is accomplished via the `fail()` and `onfail()` methods. The nice thing about these methods is that whatever you pass to `fail()` is what the `onfail()` callback receives. By convention the first argument should be a description string, but subsequent arguments can be `XMLHttpRequest` objects, exceptions objects, debugging info, whatever.
+Error handling is accomplished via the `fail()` and `onfail()` methods. The nice thing about these is that whatever you pass to `fail()` is what the `onfail()` callback receives. By convention the first argument should be a description string, but subsequent arguments can be `XMLHttpRequest` objects, exceptions objects, debugging info, whatever.
 
     await()
     .fail('fake failure', 1, 2, 3)
     .onfail(function(){
       alert([].slice.call(arguments).join(','))
+      // "fake failure,1,2,3"
     })
-    // alerts "fake failure,1,2,3"
 
 ## Chainability of promises
 
-Chainability is a key advantage of promises. Here we've declared two multi-var promises, and we want to suck the output from one to the other:
+Chainability is a nice advantage of promises. Here we've declared two multi-var promises, and we want to suck the output from one to the other:
 
     n1 = await('foo', 'bar', 'baz')
     n2 = await('foo', 'bar', 'buz', 'qux')
 
 What happens is that n1 can *take* n2.
 
-    n1.take(n2) // There's lots of code here that never got written,
-                // hence this comment is here to take up some of
-                // the dead space.
+    n1.take(n2)
 
 n1 now takes n2, and if n2 fails, n1 fails. But what about the fact that n1 has a different set of things than n2? What happened in this case is:
 
@@ -176,6 +167,15 @@ Also, it's worth noting that if the mapping you declare conflicts with direct ma
     buz --> baz
     bar        
 
+The `take()` method saves typing. Here's the equivalent chaining done manually:
+
+    n2.onfail(n1.fail)
+    n2.onkeep(function(got){
+    	n1.keep('foo', got.foo)
+    	n1.keep('bar', got.qux)
+    	n1.keep('baz', got.buz)
+    })
+
 ## Libraryification (Backbone.js example)
 
 With the separation of concerns await.js provides, it's possible (and advisable) to offload the getting of things to functions or libraries. You could, for example, extend the Backbone.js Model and Collection objects to have `pfetch` methods that return single-item promises for `model` and `collection`, respectively.
@@ -197,16 +197,14 @@ With the separation of concerns await.js provides, it's possible (and advisable)
         }, this);
       }
     });
-    ...and similar for Backbone.Collection...
+    // and similar for Backbone.Collection...
 
-Suddenly, building page views on asynchronous data fetches isn't very complicated.
+    ...
 
-    // in a route handler somewhere
+    // meanwhile, in a route handler somewhere
     await('model', 'collection')
-    .run(function(prom){
-      prom.take(new User({id:userId}).pfetch())
-      prom.take(new Feed(null, {userId:userId}).pfetch())
-    })
+    .take(new User({id:userId}).pfetch())
+    .take(new Feed().pfetch())
     .onkeep(function(got){
       new UserFeedView({
         el: '#content',
@@ -217,13 +215,7 @@ Suddenly, building page views on asynchronous data fetches isn't very complicate
 
 ## Picky details and incidentalities
 
-Methods are chainable where it makes sense, if that kind of thing floats your boat.
-
-	await()
-	.onkeep(...)
-	.onfail(...)
-
-Promises can be optionally constructed on arrays, all other rules being the same.
+`await()` can also build on arrays, all other rules being the same.
 
     // these are the same
     await('foo', 'bar', 'baz')
@@ -233,20 +225,22 @@ Empty promises are legal and keep immediately.
 
     await().onkeep(function(got){
       alert(JSON.stringify(got));
+      // '{}'
     })
-    // alerts '{}'
 
-Constructor arguments are coerced to strings.
+`await()` arguments are coerced to strings.
 
     await({}) // {} is converted to string, but it's legal
-                  // you'd just have to say promise.keep("[object Object]")!
+              // you'd just have to say promise.keep("[object Object]")!
 
 There's nothing magical about `promise.run()`. It just runs the given function, passing itself to the callback, and also returning itself for chainability.
 
-    var refA = await().run(function(refB){
-      alert(refA === refB)
+	var refB
+    var refA = await().run(function(promise){
+      refB = promise
     })
-    // alerts "true"
+    alert(refA === refB)
+    // "true"
 
 `promise.run()` just avoids depositing a variable in scope, provides a handy closure, and keeps things grouped nicely.
 

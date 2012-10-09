@@ -1,8 +1,10 @@
 # await.js: easy promises
 
-await.js has no library dependencies, and runs in either browsers or in Node. The word "await" was inspired by [IcedCoffeeScript](http://maxtaco.github.com/coffee-script/), wich is an amazing idea that's worth checking out. **Old browser note**: you'll need some polyfill goodness to get it to work in browsers that don't support JavaScript 1.8.5. AKA IE8 and lower. To that end, an `example-polyfills.js` file is included in this project. The polyfills file has no test coverage, and is otherwise purely optional.
-
 await.js aims to present a no-nonsense promise API. Promises in await.js are simple. You ask for set of things, and you get back an object that emits *keep* and *fail* events. In your *keep* event handler, you then have access to the all the things.
+
+await.js has no library dependencies, and runs in either browsers or in Node. "await" was inspired by [IcedCoffeeScript](http://maxtaco.github.com/coffee-script/), wich is an amazing idea that's worth checking out. **Old browser note**: you'll need some polyfill goodness to get it to work in browsers that don't support JavaScript 1.8.5. AKA IE8 and lower. To that end, an `example-polyfills.js` file is included in this project. The polyfills file has no test coverage, and is otherwise purely optional.
+
+An await.js promise is like a mad lib. There are several slots to fill, and when you fill them all, it's done. In fact, here's a mad lib using await.
 
     var promise = await('noun1', 'noun2', 'adjective')
 

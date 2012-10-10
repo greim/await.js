@@ -1,4 +1,4 @@
-# await.js: easy promises
+# await.js
 
 await.js de-mystifies asynchronous programming by providing a no-nonsense promises API. When you await a set of things, you get back a promise with *keep* and *fail* events. In your *keep* event handler, you then have access to the all the things.
 

@@ -50,7 +50,7 @@ The *keep* event won't fire until the mad lib is complete. Here the words were g
     // --------------------------------------
     
     // here's how I'll worry about using them
-    promise.onkeep(function(got){
+    prom.onkeep(function(got){
       alert('success!')
       alert(got.user)
       alert(got.feed)
@@ -59,7 +59,7 @@ The *keep* event won't fire until the mad lib is complete. Here the words were g
     // --------------------------------------
     
     // here's how I'll worry about error handling
-    promise.onfail(function(reason){
+    prom.onfail(function(reason){
       alert('error!')
       alert(reason)
     })
@@ -67,7 +67,7 @@ The *keep* event won't fire until the mad lib is complete. Here the words were g
     // --------------------------------------
     
     // here's what i'll do in any case
-    promise.onresolve(function(){
+    prom.onresolve(function(){
       alert('all done!')
     })
 

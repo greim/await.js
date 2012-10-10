@@ -145,9 +145,13 @@ To save typing and/or to encapsulate the promise variable, you can use the `run(
   </tbody>
 </table>
 
+## Basic usage
+
+For every string you pass to the `await()` function, that's one piece of the promise that needs to be kept before the whole promise keeps. The keeping may be done synchronously or asynchronously. Once the whole promise is kept, you can call `onkeep()` over and over and gain access to those bits of data as many times as you want.
+
 ## Grouping promises
 
-The `await()` function accepts other promises in addition to strings. In such cases, the newly-created promise is the *union* of all grouped promises and string arguments.
+The `await()` function accepts other promises in addition to strings. In such cases, the newly-created promise is simply the *union* of all grouped promises and string arguments.
 
     p1 = await('foo', 'bar')
     p2 = await('baz')

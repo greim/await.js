@@ -6,7 +6,7 @@ await.js has no library dependencies, and runs in either browsers or in Node. "A
 
 *Old browser note* - you'll need some polyfill goodness to use it in browsers that don't support JavaScript 1.8.5. (e.g. IE8 and lower). To that end, example-polyfills.js is included in this project. The polyfills file has no test coverage, and is otherwise purely optional.
 
-## Think of this as mad libs
+## How does it work? (Mad libs)
 
 await.js promises are like mad libs. In fact, here's a mad lib implemented using an await.js promise.
 
@@ -28,9 +28,9 @@ await.js promises are like mad libs. In fact, here's a mad lib implemented using
 
 The *keep* event won't fire until the mad lib is complete. Here the words were gotten synchronously, but getting them asynchronously would have worked too. Imagine if a setTimeout() were wrapped around all the prom.keep()s in the above code.
 
-## Benefit: separation of concerns
+## What's the benefit? (SoC)
 
-Separation of concerns is the first casualty of the nested-callback hell that plagues asynchronous JavaScript. It's nice to have an approach that lets you maintain a semblance of order. Here's a fuller example of await.js in action.
+[Separation of concerns](http://en.wikipedia.org/wiki/Separation_of_concerns) is the first casualty of the nested-callback hell that plagues asynchronous JavaScript. Here's an example of how await.js helps maintain SoC:
 
     // I need some things
     var prom = await('user', 'feed')
@@ -59,9 +59,9 @@ Separation of concerns is the first casualty of the nested-callback hell that pl
     // --------------------------------------
     
     // here's how I'll worry about error handling
-    promise.onfail(function(message){
+    promise.onfail(function(reason){
       alert('error!')
-      alert(message)
+      alert(reason)
     })
     
     // --------------------------------------
@@ -71,83 +71,17 @@ Separation of concerns is the first casualty of the nested-callback hell that pl
       alert('all done!')
     })
 
-To save typing and/or to encapsulate the promise variable, you can use the `run()` method, and just chain all the method calls together:
+To save typing and/or to encapsulate the promise variable, you can use the `run()` method, and just chain all the method calls together, in which case the above could be written as:
 
     await('user', 'feed')
-    .run(function(promise){ ...provisioning code... })
+    .run(function(prom){ ...provisioning code... })
     .onkeep(function(got){ ...consumer code... })
     .onfail(function(reason){ ...error handling code... })
     .onresolve(function(){ ...resolution code... })
 
-# Usage
+# Basic usage
 
-## API overview
-
-<table summary="overview of api">
-  <thead>
-    <tr>
-      <th>method</th>
-      <th>description</th>
-      <th>returns</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">var promise =<br>await(item1, item2, ... itemN)</td>
-      <td><strong>Factory function</strong>. Returns a promise, with the idea that you want to <em>await</em> the fulfillment of this set of things before you consider the promise kept. The <code>new</code> keyword is disallowed, since this is a factory, not a constructor. Accepts zero or more args which can be strings or other promises, which allows grouping. Order of arguments is unimportant.</td>
-      <td>promise</td>
-    </tr>
-    <tr>
-      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.run(callback[, context])</td>
-      <td>Runs <code>callback</code> immediately (synchronously), which contains whatever promise fulfillment logic you want. <code>callback</code> is passed a reference to the promise. If defined and not null, <code>context</code> will be <code>this</code> in <code>callback</code>.</td>
-      <td>itself</td>
-    </tr>
-    <tr>
-      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.onkeep(callback[, context])</td>
-      <td>Calls <code>callback</code> when every item of the promise is fulfilled. If the promise is already fulfilled, <code>callback</code> runs immediately. <code>callback</code> is passed a map of all the things in the promise, keyed by the strings passed to <code>await()</code>. If defined and not null, <code>context</code> will be <code>this</code> in <code>callback</code>.</td>
-      <td>itself</td>
-    </tr>
-    <tr>
-      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.onfail(callback[, context])</td>
-      <td>Calls <code>callback</code> when promise fails. If promise already failed, <code>callback</code> runs immediately. <code>callback</code> is passed the the set of args that were passed to the <code>fail()</code> call which triggered the fail. If defined and not null, <code>context</code> will be <code>this</code> in <code>callback</code>.</td>
-      <td>itself</td>
-    </tr>
-    <tr>
-      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.onresolve(callback[, context])</td>
-      <td>Calls <code>callback</code> when promise either keeps or fails. If promise has already been kept or failed, <code>callback</code> runs immediately. If defined and not null, <code>context</code> will be <code>this</code> in <code>callback</code>.</td>
-      <td>itself</td>
-    </tr>
-    <tr>
-      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.keep(item[, data])</td>
-      <td>Fulfills one of the things of this promise. <code>data</code> is optional and if not defined, defaults to <code>null</code>.</td>
-      <td>itself</td>
-    </tr>
-    <tr>
-      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.fail(stringReason, ...)</td>
-      <td>Fail the promise for the given <code>reason</code>. The first argument is a string. Any number of subsequent arguments are allowed. The whole list of args will then be applied to <code>onfail()</code> callbacks.</td>
-      <td>itself</td>
-    </tr>
-    <tr>
-      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.take(otherPromise[, map])</td>
-      <td>Set up a dependency chain so that <code>promise</code> depends on <code>otherPromise</code>. <code>map</code> is optional and provides custom mapping from <code>otherPromise</code> to <code>promise</code>. The dependency is such that if <code>otherPromise</code> fails, </code>promise</code> fails.</td>
-      <td>itself</td>
-    </tr>
-    <tr>
-      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.things()</td>
-      <td>Retrieve a list of things this promise is awaiting.</td>
-      <td>array</td>
-    </tr>
-    <tr>
-      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.map(mapping)</td>
-      <td>Get a copy of this promise. <code>mapping</code> updates the names of the things in the new promise, which is useful for avoiding naming conflicts during grouping. The copy is automatically chained to the original.</td>
-      <td>different promise</td>
-    </tr>
-  </tbody>
-</table>
-
-## Basic usage
-
-For every string you pass to the `await()` function, that's one piece of the promise that needs to be kept before the whole promise keeps. The keeping may be done synchronously or asynchronously. Once the whole promise is kept, you can call `onkeep()` over and over and gain access to those bits of data as many times as you want. While the promise is unkept, your `onkeep()` callbacks are queued up for later execution. The useful abstraction here is that your program doesn't actually need to worry about when the callback runs.
+For every string you pass to the `await()` function, that's one piece of the promise that needs to be kept before the whole promise keeps. The keeping may be done synchronously or asynchronously. Once the whole promise is kept, you can call `onkeep()` over and over and gain access to those bits of data as many times as you want. While the promise is unkept, your `onkeep()` callbacks are queued up for later execution. However, whether or not the callback is queued or executed immediately is of no concern to your program.
 
 ## Grouping promises
 
@@ -166,7 +100,7 @@ The `await()` function accepts other promises in addition to strings. In such ca
       // do something with got.qux
     })
 
-`map()` returns a copy of the promise with updated names, and can be used to avoid name collisions.
+`map()` returns a chained copy of the promise with updated names, and can be used to step around name collisions.
 
     p1 = await('model')
     p2 = await('model')
@@ -238,14 +172,14 @@ Just for comparison, here's the equivalent chaining done manually:
 
     p2.onfail(p1.fail)
     p2.onkeep(function(got){
-    	p1.keep('foo', got.foo)
-    	p1.keep('bar', got.qux)
-    	p1.keep('baz', got.buz)
+      p1.keep('foo', got.foo)
+      p1.keep('bar', got.qux)
+      p1.keep('baz', got.buz)
     })
 
 ## Error handling
 
-Error handling is accomplished via the `fail()` and `onfail()` methods. The string error message passed to `fail()` is what the `onfail()` callback receives. Any subsequent arguments passed to `fail()` are also applied to the `onfail()` callback, which is useful for debugging, etc.
+Error handling is accomplished via the `fail()` and `onfail()` methods. The error message passed to `fail()` is what the `onfail()` callback receives. Any subsequent arguments passed to `fail()` are also applied to the `onfail()` callback, which is useful for debugging, etc.
 
     await()
     .fail('fake failure', 1, 2, 3)
@@ -260,7 +194,71 @@ The await.js library pattern is as follows:
 
     return await(...).run(...)
 
-In other words, libraries can use this pattern to return promises that other people can use. A couple of examples are provided in the `examples` subfolder of this project, including one for Backbone models and another for jQuery ajax.
+Examples are provided in the `examples` subfolder of this project, including one for Backbone models and another for jQuery ajax.
+
+## API overview
+
+<table summary="overview of api">
+  <thead>
+    <tr>
+      <th>method</th>
+      <th>description</th>
+      <th>returns</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">var promise =<br>await(item1, item2, ... itemN)</td>
+      <td><strong>Factory function</strong>. Returns a promise, with the idea that you want to <em>await</em> the fulfillment of this set of things before you consider the promise kept. The <code>new</code> keyword is disallowed, since this is a factory, not a constructor. Accepts zero or more args which can be strings or other promises, which allows grouping. Order of arguments is unimportant.</td>
+      <td>promise</td>
+    </tr>
+    <tr>
+      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.run(callback[, context])</td>
+      <td>Runs <code>callback</code> immediately (synchronously), which contains whatever promise fulfillment logic you want. <code>callback</code> is passed a reference to the promise. If defined and not null, <code>context</code> will be <code>this</code> in <code>callback</code>.</td>
+      <td>itself</td>
+    </tr>
+    <tr>
+      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.onkeep(callback[, context])</td>
+      <td>Calls <code>callback</code> when every item of the promise is fulfilled. If the promise is already fulfilled, <code>callback</code> runs immediately. <code>callback</code> is passed a map of all the things in the promise, keyed by the strings passed to <code>await()</code>. If defined and not null, <code>context</code> will be <code>this</code> in <code>callback</code>.</td>
+      <td>itself</td>
+    </tr>
+    <tr>
+      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.onfail(callback[, context])</td>
+      <td>Calls <code>callback</code> when promise fails. If promise already failed, <code>callback</code> runs immediately. <code>callback</code> is passed the the set of args that were passed to the <code>fail()</code> call which triggered the fail. If defined and not null, <code>context</code> will be <code>this</code> in <code>callback</code>.</td>
+      <td>itself</td>
+    </tr>
+    <tr>
+      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.onresolve(callback[, context])</td>
+      <td>Calls <code>callback</code> when promise either keeps or fails. If promise has already been kept or failed, <code>callback</code> runs immediately. If defined and not null, <code>context</code> will be <code>this</code> in <code>callback</code>.</td>
+      <td>itself</td>
+    </tr>
+    <tr>
+      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.keep(item[, data])</td>
+      <td>Fulfills one of the things of this promise. <code>data</code> is optional and if not defined, defaults to <code>null</code>.</td>
+      <td>itself</td>
+    </tr>
+    <tr>
+      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.fail(stringReason, ...)</td>
+      <td>Fail the promise for the given <code>reason</code>. The first argument is a string. Any number of subsequent arguments are allowed. The whole list of args will then be applied to all <code>onfail()</code> callbacks.</td>
+      <td>itself</td>
+    </tr>
+    <tr>
+      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.take(otherPromise[, map])</td>
+      <td>Set up a dependency chain so that <code>promise</code> depends on <code>otherPromise</code>. <code>map</code> is optional and provides custom mapping from <code>otherPromise</code> to <code>promise</code>. The dependency is such that if <code>otherPromise</code> fails, </code>promise</code> fails.</td>
+      <td>itself</td>
+    </tr>
+    <tr>
+      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.things()</td>
+      <td>Retrieve a list of things this promise is awaiting.</td>
+      <td>array</td>
+    </tr>
+    <tr>
+      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.map(mapping)</td>
+      <td>Get a copy of this promise. <code>mapping</code> updates the names of the things in the new promise, which is useful for avoiding naming conflicts during grouping. The copy is automatically chained to the original.</td>
+      <td>different promise</td>
+    </tr>
+  </tbody>
+</table>
 
 ## Picky details and incidentalities
 

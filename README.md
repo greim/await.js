@@ -147,7 +147,7 @@ To save typing and/or to encapsulate the promise variable, you can use the `run(
 
 ## Basic usage
 
-For every string you pass to the `await()` function, that's one piece of the promise that needs to be kept before the whole promise keeps. The keeping may be done synchronously or asynchronously. Once the whole promise is kept, you can call `onkeep()` over and over and gain access to those bits of data as many times as you want. While the promise is unkept, your `onkeep()` callbacks are queued up for later execution. The useful abstraction here is that your program doesn't really need to worry about when the callback runs.
+For every string you pass to the `await()` function, that's one piece of the promise that needs to be kept before the whole promise keeps. The keeping may be done synchronously or asynchronously. Once the whole promise is kept, you can call `onkeep()` over and over and gain access to those bits of data as many times as you want. While the promise is unkept, your `onkeep()` callbacks are queued up for later execution. The useful abstraction here is that your program doesn't actually need to worry about when the callback runs.
 
 ## Grouping promises
 

@@ -1,14 +1,14 @@
 # await.js: easy promises
 
-await.js de-mystifies asynchronous programming by providing a no-nonsense promises API. Promises in await.js are simple. You ask for a set of things, and you get back an object with *keep* and *fail* events. In your *keep* event handler, you then have access to the all the things.
+await.js de-mystifies asynchronous programming by providing a no-nonsense promises API. When you await a set of things, you get back a promise with *keep* and *fail* events. In your *keep* event handler, you then have access to the all the things.
 
-await.js has no library dependencies, and runs in either browsers or in Node. "await" was inspired by [IcedCoffeeScript](http://maxtaco.github.com/coffee-script/), wich is a concept worth checking out.
+await.js has no library dependencies, and runs in either browsers or in Node. "Await" was inspired by [IcedCoffeeScript](http://maxtaco.github.com/coffee-script/), wich is a concept worth checking out.
 
-*Old browser note* - you'll need some polyfill goodness to get it to work in browsers that don't support JavaScript 1.8.5. (e.g. IE8 and lower). To that end, `example-polyfills.js` is included in this project. The polyfills file has no test coverage, and is otherwise purely optional.
+*Old browser note* - you'll need some polyfill goodness to use it in browsers that don't support JavaScript 1.8.5. (e.g. IE8 and lower). To that end, example-polyfills.js is included in this project. The polyfills file has no test coverage, and is otherwise purely optional.
 
 ## Mad libs
 
-await.js is like mad libs. Consider this mad lib which is implemented using an await.js promise.
+await.js promises are like mad libs. In fact, here's a mad lib which is implemented using an await.js promise.
 
     var prom = await('noun1', 'noun2', 'adjective')
 
@@ -26,11 +26,11 @@ await.js is like mad libs. Consider this mad lib which is implemented using an a
       // "The horse eats the apple and is happy."
     })
 
-The *keep* event won't fire until it has all the things. Here they were gotten synchronously, but getting them asynchronously (via ajax or setTimeout) would have worked too. Imagine if a setTimeout were wrapped around all the prom.keeps in the above code.
+The *keep* event won't fire until the mad lib is complete. Here the words were gotten synchronously, but getting them asynchronously would have worked too. Imagine if a setTimeout() were wrapped around all the prom.keep()s in the above code.
 
 ## Benefit: separation of concerns
 
-Separation of concerns is the first casualty of the nested-callback hell that plagues asynchronous JavaScript. It's nice to have an approach that lets you maintain some semblance of order. Here's a fuller example of await.js in action.
+Separation of concerns is the first casualty of the nested-callback hell that plagues asynchronous JavaScript. It's nice to have an approach that lets you maintain a semblance of order. Here's a fuller example of await.js in action.
 
     // I need some things
     var prom = await('user', 'feed')
@@ -76,7 +76,7 @@ To save typing and/or to encapsulate the promise variable, you can use the `run(
     await('user', 'feed')
     .run(function(promise){ ...provisioning code... })
     .onkeep(function(got){ ...consumer code... })
-    .onfail(function(message){ ...error handling code... })
+    .onfail(function(reason){ ...error handling code... })
     .onresolve(function(){ ...resolution code... })
 
 # Usage
@@ -142,7 +142,7 @@ To save typing and/or to encapsulate the promise variable, you can use the `run(
 
 ## Grouping promises
 
-For convenience, `await()` can also accept other promises instead of strings, or a mix of both. In such cases, the newly-created promise is the *union* of all grouped promises, plus any string parameters.
+The `await()` function accepts other promises in addition to strings. In such cases, the newly-created promise is the *union* of all grouped promises and string arguments.
 
     p1 = await('foo', 'bar')
     p2 = await('baz')

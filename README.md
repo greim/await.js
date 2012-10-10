@@ -211,7 +211,7 @@ The await.js library pattern is as follows:
 
     return await(...).run(...)
 
-Examples are provided in the `examples` subfolder of this project, including one for Backbone models and another for jQuery ajax.
+Examples are provided in the `examples` subfolder of git repo, including one for Backbone models and another for jQuery ajax.
 
 ## API overview
 

@@ -2,9 +2,26 @@
 
 await.js de-mystifies asynchronous programming by providing a no-nonsense promises API. When you await a set of things, you get back a promise with *keep* and *fail* events. In your *keep* event handler, you then have access to the all the things.
 
-await.js has no library dependencies, and runs in either browsers or in Node. "Await" was inspired by [IcedCoffeeScript](http://maxtaco.github.com/coffee-script/), wich is a concept worth checking out.
+await.js has no library dependencies, and runs as-is in either browsers or in Node. "Await" was inspired by [IcedCoffeeScript](http://maxtaco.github.com/coffee-script/), wich is a concept worth checking out.
 
-*Old browser note* - you'll need some polyfill goodness to use it in browsers that don't support JavaScript 1.8.5. (e.g. IE8 and lower). To that end, example-polyfills.js is included in this project. The polyfills file has no test coverage, and is otherwise purely optional.
+*Old browser note* - you'll need some polyfill goodness to use it in browsers that don't support JavaScript 1.8.5. (e.g. IE8 and lower). To that end, example-polyfills.js is included in the git repo. The polyfills file has no test coverage, and is otherwise purely optional.
+
+## Installation
+
+The installation process is highly sophisticated. Either...
+
+    &lt;script src="path/to/await.js"&gt;&lt;/script&gt;
+    &lt;script&gt;await('stuff')...&lt;/script&gt;
+
+...or...
+
+    npm install await
+    node
+    > var await = require('await').await
+    > await('stuff')...
+
+
+...or clone the git repo and do what you want.
 
 ## How does it work? (Mad libs)
 

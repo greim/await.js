@@ -6,7 +6,7 @@ await.js has no library dependencies, and runs in either browsers or in Node. "A
 
 *Old browser note* - you'll need some polyfill goodness to use it in browsers that don't support JavaScript 1.8.5. (e.g. IE8 and lower). To that end, example-polyfills.js is included in this project. The polyfills file has no test coverage, and is otherwise purely optional.
 
-## Mad libs
+## Think of this as mad libs
 
 await.js promises are like mad libs. In fact, here's a mad lib implemented using an await.js promise.
 

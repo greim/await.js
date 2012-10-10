@@ -450,7 +450,7 @@ describe('await', function(){
           p1.keep('bar')
           p2.keep('baz')
           prom.keep('qux')
-        },10)
+        },1)
       })
       .onkeep(function(got){
         try {

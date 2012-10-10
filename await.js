@@ -239,6 +239,7 @@ SOFTWARE.
     // CHAPTER 6 - MAP
 
     PROMISE.map = function(map){
+      map || (map = {});
       var items = [];
       Object.keys(SLOTS).forEach(function(item){
         if (map.hasOwnProperty(item)) {

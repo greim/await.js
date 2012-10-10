@@ -137,6 +137,11 @@ To save typing and/or to encapsulate the promise variable, you can use the `run(
       <td>Retrieve a list of things this promise is awaiting.</td>
       <td>array</td>
     </tr>
+    <tr>
+      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.map([mapping])</td>
+      <td>Copy this promise. If provided, <code>mapping</code> updates the names of the things in the new promise, which is useful for grouping.</td>
+      <td>array</td>
+    </tr>
   </tbody>
 </table>
 
@@ -155,6 +160,22 @@ The `await()` function accepts other promises in addition to strings. In such ca
       // do something with got.bar
       // do something with got.baz
       // do something with got.qux
+    })
+
+`map()` returns a copy of the promise with updated names, and can be used to avoid name collisions.
+
+    p1 = await('model')
+    p2 = await('model')
+    p3 = await(
+      p1.map({'model':'m1'}),
+      p2.map({'model':'m2'})
+    )
+
+    ...
+
+    p3.onkeep(function(got){
+      // do something with got.m1
+      // do something with got.m2
     })
 
 ## Chaining promises

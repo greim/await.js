@@ -8,7 +8,7 @@ await.js has no library dependencies, and runs in either browsers or in Node. "A
 
 ## Mad libs
 
-await.js promises are like mad libs. In fact, here's a mad lib which is implemented using an await.js promise.
+await.js promises are like mad libs. In fact, here's a mad lib implemented using an await.js promise.
 
     var prom = await('noun1', 'noun2', 'adjective')
 
@@ -138,9 +138,9 @@ To save typing and/or to encapsulate the promise variable, you can use the `run(
       <td>array</td>
     </tr>
     <tr>
-      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.map([mapping])</td>
-      <td>Copy this promise. If provided, <code>mapping</code> updates the names of the things in the new promise, which is useful for grouping.</td>
-      <td>array</td>
+      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.map(mapping)</td>
+      <td>Get a copy of this promise. <code>mapping</code> updates the names of the things in the new promise, which is useful for avoiding naming conflicts during grouping. The copy is automatically chained to the original.</td>
+      <td>different promise</td>
     </tr>
   </tbody>
 </table>

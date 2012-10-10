@@ -236,7 +236,22 @@ SOFTWARE.
     };
 
     // ########################################################################
-    // CHAPTER 6 - INITIALIZE
+    // CHAPTER 6 - MAP
+
+    PROMISE.map = function(map){
+      var items = [];
+      Object.keys(SLOTS).forEach(function(item){
+        if (map.hasOwnProperty(item)) {
+          items.push(map[item]);
+        } else {
+          items.push(item);
+        }
+      });
+      return _await.apply(this, items).take(PROMISE, map);
+    };
+
+    // ########################################################################
+    // CHAPTER 7 - INITIALIZE
 
     if (this instanceof _await) {
       throw new Error("Must not use 'new' keyword.");
@@ -250,13 +265,23 @@ SOFTWARE.
         arg.things().forEach(function(item){
           SLOTS[item] = false;
         });
-        PROMISE.take(arg);
       } else {
         SLOTS[arg] = false;
       }
     });
 
-    SUCCESS = !Object.keys(SLOTS).length;
+    /*
+    Having built all slots, take grouped promises.
+    */
+    ARGS.forEach(function(arg){
+      if (arg instanceof Promise) {
+        PROMISE.take(arg);
+      }
+    });
+
+    if (Object.keys(SLOTS).length === 0) {
+      SUCCESS = true;
+    }
 
     return PROMISE;
   };

@@ -305,6 +305,96 @@ describe('await', function(){
 
   // ###########################################################
 
+  describe('#map()', function(){
+
+    it('should work for single-item promises', function(){
+      var worked = false;
+      var p1 = await('foo')
+      var p2 = p1.map({'foo':'bar'})
+      p1.keep('foo','yes')
+      p2.onkeep(function(got){
+        assert.strictEqual(got.bar,'yes')
+        worked = true;
+      })
+      assert.ok(worked)
+    })
+
+    it('should only pass the mapped item', function(){
+      var worked = false;
+      var p1 = await('foo')
+      var p2 = p1.map({'foo':'bar'})
+      p1.keep('foo','yes')
+      p2.onkeep(function(got){
+        assert.strictEqual(got.bar,'yes')
+        assert.strictEqual(Object.keys(got).length,1)
+        worked = true;
+      })
+      assert.ok(worked)
+    })
+
+    it('should work for multi-item promises', function(){
+      var worked = false;
+      var p1 = await('foo','baz')
+      var p2 = p1.map({'foo':'bar','baz':'qux'})
+      p1.keep('foo','yes')
+      p1.keep('baz','yes')
+      p2.onkeep(function(got){
+        assert.strictEqual(got.bar,'yes')
+        assert.strictEqual(got.qux,'yes')
+        worked = true;
+      })
+      assert.ok(worked)
+    })
+
+    it('should work for partial mappings', function(){
+      var worked = false;
+      var p1 = await('foo','baz')
+      var p2 = p1.map({'foo':'bar'})
+      p1.keep('foo','yes')
+      p1.keep('baz','yes')
+      p2.onkeep(function(got){
+        assert.strictEqual(got.bar,'yes')
+        assert.strictEqual(got.baz,'yes')
+        worked = true;
+      })
+      assert.ok(worked)
+    })
+
+    it('should work for empty mappings', function(){
+      var worked = false;
+      var p1 = await('foo','baz')
+      var p2 = p1.map({})
+      p1.keep('foo','yes')
+      p1.keep('baz','yes')
+      p2.onkeep(function(got){
+        assert.strictEqual(got.foo,'yes')
+        assert.strictEqual(got.baz,'yes')
+        worked = true;
+      })
+      assert.ok(worked)
+    })
+
+    it('should work asynchronously', function(done){
+      var p1 = await('foo','baz')
+      var p2 = p1.map({'foo':'bar','baz':'qux'})
+      setTimeout(function(){
+        p1.keep('foo','yes')
+        p1.keep('baz','yes')
+      },1)
+      p2.onkeep(function(got){
+        try{
+        assert.strictEqual(got.bar,'yes')
+        assert.strictEqual(got.qux,'yes')
+        done()
+      } catch(err) {
+        done(err)
+      }
+      })
+    })
+  })
+
+  // ###########################################################
+
   describe('factory function', function(){
 
     it('should use series of strings', function(){
@@ -330,18 +420,27 @@ describe('await', function(){
       catch (err) { worked = true }
       assert.ok(worked)
     })
+  })
 
-    it('should accept other promises', function(done){
-      var p1 = await('foo','bar').keep('foo','bar')
+  // ###########################################################
+
+  describe('grouping', function(){
+
+    it('should group promises synchronously', function(){
+      var worked = false;
+      var p1 = await('foo','bar').keep('foo').keep('bar')
       var p2 = await('baz').keep('baz')
-      await(p1, p2, 'qux').keep('qux')
+      await(p1, p2)
       .onkeep(function(got){
         assert.ok(got.hasOwnProperty('foo'))
         assert.ok(got.hasOwnProperty('bar'))
         assert.ok(got.hasOwnProperty('baz'))
-        assert.ok(got.hasOwnProperty('qux'))
+        worked = true
       })
+      assert.ok(worked)
+    })
 
+    it('should group promises asynchronously', function(done){
       var p1 = await('foo','bar')
       var p2 = await('baz')
       await(p1, p2, 'qux')
@@ -363,6 +462,16 @@ describe('await', function(){
         } catch(err) {
           done(err)
         }
+      })
+    })
+
+    it('should group promises using mapping', function(){
+      var p1 = await('foo').keep('foo')
+      var p2 = await('foo').keep('foo')
+      await(p1, p2.map({'foo':'bar'}))
+      .onkeep(function(got){
+        assert.ok(got.hasOwnProperty('foo'))
+        assert.ok(got.hasOwnProperty('bar'))
       })
     })
   })

@@ -10,8 +10,8 @@ await.js has no library dependencies, and runs as-is in either browsers or in No
 
 The installation process is highly sophisticated. Either...
 
-    &lt;script src="path/to/await.js"&gt;&lt;/script&gt;
-    &lt;script&gt;await('stuff')...&lt;/script&gt;
+    <script src="path/to/await.js"></script>
+    <script>await('stuff')...</script>
 
 ...or...
 

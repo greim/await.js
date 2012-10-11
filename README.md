@@ -1,6 +1,6 @@
 # await.js
 
-await.js de-mystifies asynchronous programming by providing a no-nonsense promises API. When you await a set of things, you get back a promise with *keep* and *fail* events. In your *keep* event handler, you then have access to the all the things.
+await.js makes promises easy by re-thinking them in terms of set theory. You await() a set of things, and get back a promise with *keep* and *fail* events. In your *onkeep* event handler, you then have access to that set of things.
 
 await.js has no library dependencies, and runs as-is in either browsers or in Node. "Await" was inspired by [IcedCoffeeScript](http://maxtaco.github.com/coffee-script/), wich is a concept worth checking out.
 
@@ -11,29 +11,32 @@ await.js has no library dependencies, and runs as-is in either browsers or in No
 The installation process is highly sophisticated. Either...
 
     <script src="path/to/await.js"></script>
-    <script>await('stuff')...</script>
+    <script>await('thing1', 'thing2')...</script>
 
 ...or...
 
     npm install await
     node
     > var await = require('await').await
-    > await('stuff')...
+    > await('thing1', 'thing2')...
 
+...or clone the repo and do what you want.
 
-...or clone the git repo and do what you want.
-
-## How does it work? (Mad libs)
+## How does it work? (mad libs)
 
 await.js promises are like mad libs. In fact, here's a mad lib implemented using an await.js promise.
 
+    // promise ourselves two nouns and an adjective
     var prom = await('noun1', 'noun2', 'adjective')
 
+    // for demo purposes, just keep() each
+    // part of the promise immediately
     prom.keep('noun1', 'horse')
     prom.keep('noun2', 'apple')
     prom.keep('adjective', 'happy')
 
     prom.onkeep(function(got){
+      // now, we 'got' all the things we need!
       console.log(
       	"The %s eats the %s and is %s.",
       	got.noun1,
@@ -43,18 +46,16 @@ await.js promises are like mad libs. In fact, here's a mad lib implemented using
       // "The horse eats the apple and is happy."
     })
 
-The *keep* event won't fire until the mad lib is complete. Here the words were gotten synchronously, but getting them asynchronously would have worked too. Imagine if a setTimeout() were wrapped around all the prom.keep()s in the above code.
+The *keep* event fires when the last piece of the mad lib is complete. Here the words were gotten synchronously, but getting them asynchronously, and in any order, would have worked just as well.
 
-## What's the benefit? (SoC)
+## What's the benefit? (separation of concerns)
 
-[Separation of concerns](http://en.wikipedia.org/wiki/Separation_of_concerns) is the first casualty of the nested-callback hell that plagues asynchronous JavaScript. Here's an example of how await.js helps maintain SoC:
+await's set-theoretical approach breaks asynchronous tasks down into areas of concern that map well to the programmer's reasoning process. It starts with the up-front realization that you need to *await* a set of things you don't currently have:
 
-    // I need some things
     var prom = await('user', 'feed')
 
-    // --------------------------------------
+...followed immediately by the question of how to get those things:
 
-    // here's how I'll worry about getting them
     $.ajax('/api/current_user', {
       success: function(data){ prom.keep('user', data) },
       error: function(xhr){ prom.fail('error ' + xhr.status) }
@@ -64,45 +65,42 @@ The *keep* event won't fire until the mad lib is complete. Here the words were g
       error: function(xhr){ prom.fail('error ' + xhr.status) }
     })
     
-    // --------------------------------------
+...what to do once you have them:
     
-    // here's how I'll worry about using them
     prom.onkeep(function(got){
       alert('success!')
       alert(got.user)
       alert(got.feed)
     })
     
-    // --------------------------------------
+...what to do if something goes wrong:
     
-    // here's how I'll worry about error handling
     prom.onfail(function(reason){
       alert('error!')
       alert(reason)
     })
     
-    // --------------------------------------
+...and what to do in either case:
     
-    // here's what i'll do in any case
     prom.onresolve(function(){
       alert('all done!')
     })
 
-To save typing and/or to encapsulate the promise variable, you can use the `run()` method, and just chain all the method calls together, in which case the above could be written as:
+To save typing and/or to encapsulate the `prom` variable, you can also use the `run()` method and then chain the method calls together, in which case the above could be written as:
 
     await('user', 'feed')
-    .run(function(prom){ ...provisioning code... })
+    .run(function(prom){ ...provider code... })
     .onkeep(function(got){ ...consumer code... })
     .onfail(function(reason){ ...error handling code... })
     .onresolve(function(){ ...resolution code... })
 
 # Basic usage
 
-For every string you pass to the `await()` function, that's one piece of the promise that needs to be kept before the whole promise keeps. The keeping may be done synchronously or asynchronously. Meanwhile, you can call `onkeep()` over and over to gain access to those bits of data as many times as you want. While the promise is unkept, your `onkeep()` callbacks are queued up for later execution.
+For every string you pass to the `await()` function, that's one piece of the promise that you need to `keep()` before the whole promise keeps. Meanwhile, you can call `onkeep()` over and over to gain access to those bits of data as many times as you want. While the promise is unkept, your `onkeep()` callbacks are queued up for later execution.
 
 ## Grouping promises
 
-The `await()` function accepts other promises in addition to strings. In such cases, the newly-created promise is simply the *union* of all grouped promises and string arguments.
+The `await()` function accepts other promises in addition to strings. In such cases, the newly-created promise is the *union* of all grouped promises and string arguments.
 
     p1 = await('foo', 'bar')
     p2 = await('baz')
@@ -151,7 +149,7 @@ What happens is that p1 can *take* p2.
 
     p1.take(p2)
 
-p1 now takes p2, and if p2 fails, p1 fails. But what about the fact that p1 has a different set of things than p2? What happened in this case is:
+p1 now takes p2, and if p2 fails, p1 fails. As you can see, p2 is a different set of things than p1. How does p2 map to p1?
 
     p2      p1 
     ===========
@@ -160,7 +158,7 @@ p1 now takes p2, and if p2 fails, p1 fails. But what about the fact that p1 has 
     buz     baz
     qux        
 
-In other words, p1 took the *intersection* of itself with p2. That's easy enough to understand. But you can also further specify how p2 gets mapped intp p1 by giving a mapping object:
+In other words, p1 only took the *intersection* of itself with p2. Thus when p2 keeps, p1 remains unkept. You can therefore optionally provide a mapping object:
 
     p1.take(p2, {'buz':'baz'})
 
@@ -171,7 +169,7 @@ In other words, p1 took the *intersection* of itself with p2. That's easy enough
     buz --> baz
     qux        
 
-Also, it's worth noting that if the mapping you declare conflicts with direct matches, the mapping wins. For example:
+If the mapping you provide conflicts with direct matches, the mapping wins:
 
     p1.take(p2, {
       'buz':'baz',
@@ -185,24 +183,15 @@ Also, it's worth noting that if the mapping you declare conflicts with direct ma
     buz --> baz
     bar        
 
-Just for comparison, here's the equivalent chaining done manually:
-
-    p2.onfail(p1.fail)
-    p2.onkeep(function(got){
-      p1.keep('foo', got.foo)
-      p1.keep('bar', got.qux)
-      p1.keep('baz', got.buz)
-    })
-
 ## Error handling
 
 Error handling is accomplished via the `fail()` and `onfail()` methods. The error message passed to `fail()` is what the `onfail()` callback receives. Any subsequent arguments passed to `fail()` are also applied to the `onfail()` callback, which is useful for debugging, etc.
 
-    await()
-    .fail('fake failure', 1, 2, 3)
+    await('thing')
+    .fail('oops!', 1, 2, 3)
     .onfail(function(){
       alert([].slice.call(arguments).join(','))
-      // "fake failure,1,2,3"
+      // "oops!,1,2,3"
     })
 
 ## Library pattern
@@ -211,7 +200,7 @@ The await.js library pattern is as follows:
 
     return await(...).run(...)
 
-Examples are provided in the `examples` subfolder of git repo, including one for Backbone models and another for jQuery ajax.
+Examples are provided in the `examples` subfolder of the repo, including one for Backbone models and another for jQuery ajax.
 
 ## API overview
 
@@ -277,7 +266,7 @@ Examples are provided in the `examples` subfolder of git repo, including one for
   </tbody>
 </table>
 
-## Picky details and incidentalities
+## Details and incidentalities
 
 For convenience, all methods that take callbacks also take a second context arg.
 
@@ -290,6 +279,17 @@ Empty promises are legal and keep immediately.
     await().onkeep(function(got){
       alert(JSON.stringify(got));
       // '{}'
+    })
+
+Once a promise is either kept or failed, subsequent calls to `keep()` or `fail()` are silently ignored.
+
+    await('greeting')
+    .keep('greeting', 'hi')
+    .keep('greeting', 'hello')
+    .fail('no greeting for you')
+    .onkeep(function(got){
+      alert(got.greeting);
+      // 'hi'
     })
 
 `await()` arguments are coerced to strings.
@@ -330,8 +330,4 @@ There's nothing magical about `promise.run()`. It just runs the given function, 
 
     // in case of fail, alerts 'fail1' > 'resolve' > 'fail2'
     // in case of keep, alerts 'keep1' > 'resolve' > 'keep2'
-
-
-
-
 

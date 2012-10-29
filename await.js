@@ -274,10 +274,6 @@ SOFTWARE.
     // ########################################################################
     // CHAPTER 7 - INITIALIZE
 
-    if (this instanceof _await) {
-      throw new Error("Must not use 'new' keyword.");
-    }
-
     /*
     Optionally take other promises.
     */
@@ -309,6 +305,9 @@ SOFTWARE.
 
   // ########################################################################
   // CONCLUSION
+
+  // for extensibility
+  _await.prototype = Promise.prototype;
 
   // for browsers
   try {

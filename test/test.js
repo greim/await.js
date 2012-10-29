@@ -479,13 +479,6 @@ describe('await', function(){
       .onkeep(function(){ worked = true })
       assert.ok(worked)
     })
-
-    it('should fail with the new keyword', function(){
-      var worked = false
-      try { new await() }
-      catch (err) { worked = true }
-      assert.ok(worked)
-    })
   })
 
   // ###########################################################

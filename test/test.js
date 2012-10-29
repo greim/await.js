@@ -207,6 +207,72 @@ describe('await', function(){
 
   // ###########################################################
 
+  describe('#nodify()', function(){
+
+    function fakeNodeMethod(cb){
+      setTimeout(function(){
+        cb(null, 1, '2')
+      },0)
+    }
+
+    function fakeNodeMethodErr(cb){
+      setTimeout(function(){
+        cb(new Error('Fake error.'), 1, '2')
+      },0)
+    }
+
+    it('should work', function(done){
+      var prom = await('one')
+      fakeNodeMethod(prom.nodify('one'))
+      prom.onkeep(function(got){
+        assert.strictEqual(got.one, 1)
+        done()
+      })
+      prom.onfail(function(){
+        done(new Error('Unexpected failure'))
+      })
+    })
+
+    it('should work with multiple args', function(done){
+      var prom = await('one', 'two')
+      fakeNodeMethod(prom.nodify('one', 'two'))
+      prom.onkeep(function(got){
+        assert.strictEqual(got.one, 1)
+        assert.strictEqual(got.two, '2')
+        done()
+      })
+      prom.onfail(function(){
+        done(new Error('Unexpected failure'))
+      })
+    })
+
+    it('should work with a null arg', function(done){
+      var prom = await('two')
+      fakeNodeMethod(prom.nodify(null, 'two'))
+      prom.onkeep(function(got){
+        assert.strictEqual(got.one, undefined)
+        assert.strictEqual(got.two, '2')
+        done()
+      })
+      prom.onfail(function(){
+        done(new Error('Unexpected failure'))
+      })
+    })
+
+    it('should fail properly', function(done){
+      var prom = await('one')
+      fakeNodeMethodErr(prom.nodify('one'))
+      prom.onkeep(function(got){
+        done(new Error('Unexpected success'))
+      })
+      prom.onfail(function(){
+        done()
+      })
+    })
+  })
+
+  // ###########################################################
+
   describe('#take()', function(){
 
     it('should be chainable', function(){

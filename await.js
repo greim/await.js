@@ -198,6 +198,26 @@ SOFTWARE.
       return PROMISE;
     };
 
+    /**
+    Convenience function for error-first Node JS callback convention.
+    */
+    PROMISE.nodify = function(){
+      var things = slice.call(arguments);
+      return function(err){
+        if (err) {
+          PROMISE.fail(err.message, err);
+        } else {
+          var args = slice.call(arguments);
+          args.shift(); // lose the error
+          things.forEach(function(thing, idx){
+            if (thing !== null && thing !== undefined) {
+              PROMISE.keep(thing, args[idx]);
+            }
+          });
+        }
+      };
+    };
+
     // ########################################################################
     // CHAPTER 5 - CHAINING
 

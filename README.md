@@ -202,6 +202,39 @@ The await.js library pattern is as follows:
 
 Examples are provided in the `examples` subfolder of the repo, including one for Backbone models and another for jQuery ajax.
 
+## Use in Node JS
+
+Node JS uses a convention where callbacks are passed an error as the first argument. To save typing in a Node setting--or anywhere else this convention is used--await.js promises expose the nodify() method. Here's a basic example:
+
+    fs.readFile('/tmp/log', promise.nodify('logData'));
+
+Which is equivalent to:
+
+    fs.readFile('/tmp/log', function(err, data){
+      if (err) {
+        promise.fail(err.message, err);
+      } else {
+        promise.keep('logData', data);
+      }
+    });
+
+nodify() returns a function intended to be passed as a callback to an async Node method, which when called will keep or fail your promise, as appropriate. The list of names that you pass to nodify() are matched to arguments that Node passes to the callback, *after* the initial error argument. Beyond the error being first, Node's callback signature varies depending on the API, so here are some examples covering basic scenarios:
+
+### Callback signature (error, a, b, c)
+
+    nodeApi.doSomethingAsync(promise.nodify('foo', 'bar'))
+    // 'foo' and 'bar' are kept with value a and b, respectively. c is discarded
+
+### Callback signature (error)
+
+    nodeApi.doSomethingAsync(promise.nodify('foo', 'bar'))
+    // 'foo' and 'bar' are both kept with value null
+
+### Callback signature (error, a, b)
+
+    nodeApi.doSomethingAsync(promise.nodify(null, 'foo'))
+    // 'foo' is kept with value b
+
 ## API overview
 
 <table summary="overview of api">
@@ -262,6 +295,11 @@ Examples are provided in the `examples` subfolder of the repo, including one for
       <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.map(mapping)</td>
       <td>Get a copy of this promise. <code>mapping</code> updates the names of the things in the new promise, which is useful for avoiding naming conflicts during grouping. The copy is automatically chained to the original.</td>
       <td>different promise</td>
+    </tr>
+    <tr>
+      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.nodify(item1, item2, ... itemN)</td>
+      <td>Get a callback function suitable for use in Node JS applications.</td>
+      <td>function</td>
     </tr>
   </tbody>
 </table>

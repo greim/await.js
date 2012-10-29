@@ -198,7 +198,7 @@ Sometimes you might only want to await something to *happen*, without necessaril
     await('domReady', 'feed')
     .run(function(prom){
       $(document).ready(function(){
-        prom.keep('domReady') // <-- LEFT OFF SECOND PARAM
+        prom.keep('domReady') // left off second param
       })
       fetchFeed(function(feed){
         prom.keep('feed', feed)

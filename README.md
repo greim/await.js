@@ -11,14 +11,10 @@ await.js has no library dependencies, and runs as-is in either browsers or in No
 The installation process is highly sophisticated. Either...
 
     <script src="path/to/await.js"></script>
-    <script>await('thing1', 'thing2')...</script>
 
 ...or...
 
     npm install await
-    node
-    > var await = require('await').await
-    > await('thing1', 'thing2')...
 
 ...or clone the repo and do what you want.
 
@@ -31,6 +27,7 @@ await.js promises are like mad libs. In fact, here's a mad lib implemented using
 
     // for demo purposes, just keep() each
     // part of the promise immediately
+    // however, these could have been kept asynchronously
     prom.keep('noun1', 'horse')
     prom.keep('noun2', 'apple')
     prom.keep('adjective', 'happy')
@@ -96,11 +93,11 @@ To save typing and/or to encapsulate the `prom` variable, you can also use the `
 
 # Basic usage
 
-For every string you pass to the `await()` function, that's one piece of the promise that you need to `keep()` before the whole promise keeps. Meanwhile, you can call `onkeep()` over and over to gain access to those bits of data as many times as you want. While the promise is unkept, your `onkeep()` callbacks are queued up for later execution.
+For every string you pass to the `await()` function, that's one piece of the promise that you need to `keep()` before the whole promise keeps. Meanwhile, you can call `onkeep()` over and over to gain access to those bits of data as many times as you want. While the promise is unkept, your `onkeep()` callbacks are simply queued up for later execution.
 
 ## Grouping promises
 
-The `await()` function accepts other promises in addition to strings. In such cases, the newly-created promise is the *union* of all grouped promises and string arguments.
+`await()` accepts other promises in addition to strings. In such cases, the newly-created promise is the *union* of all grouped promises and string arguments.
 
     p1 = await('foo', 'bar')
     p2 = await('baz')
@@ -163,7 +160,7 @@ In other words, p1 only took the *intersection* of itself with p2. Thus when p2 
     p1.take(p2, {'buz':'baz'})
 
     p2      p1 
-    ===========
+    ===========  *p1 can now fire its keep event*
     foo --> foo
     bar --> bar
     buz --> baz
@@ -192,6 +189,24 @@ Error handling is accomplished via the `fail()` and `onfail()` methods. The erro
     .onfail(function(){
       alert([].slice.call(arguments).join(','))
       // "oops!,1,2,3"
+    })
+
+## Not everything needs a value
+
+Sometimes you might only want to await something to *happen*, without necessarily needing a value back from it. In that case, just leave off the second parameter to `keep()` and it will default to null:
+
+    await('domReady', 'feed')
+    .run(function(prom){
+      $(document).ready(function(){
+        prom.keep('domReady') // <-- LEFT OFF SECOND PARAM
+      })
+      fetchFeed(function(feed){
+        prom.keep('feed', feed)
+      })
+    })
+    .onkeep(function(got){
+      // got.feed contains data
+      // got.domReady === null
     })
 
 ## Library pattern

@@ -311,7 +311,11 @@ SOFTWARE.
 
   // for browsers
   try {
-    window.await = _await;
+    if (typeof define === 'function' && define.amd) {
+      define('await', [], function(){ return _await; });
+    } else {
+      window.await = _await;
+    }
   } catch(err) {}
 
   // for node

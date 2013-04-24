@@ -1,6 +1,6 @@
 {
     "name": "await"
-  , "version": "0.1.1"
+  , "version": "0.1.2"
   , "description": "Easy promises"
   , "keywords": ["promises", "futures", "deferreds", "asynchronous"]
   , "author": "Greg Reimer <gregreimer@gmail.com> (http://obadger.com/)"

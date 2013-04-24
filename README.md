@@ -18,6 +18,23 @@ The installation process is highly sophisticated. Either...
 
 ...or clone the repo and do what you want.
 
+## CommonJS versus AMD versus the global `await` object
+
+All three are supported. In CommonJS world, it's like this:
+
+    var await = require('await');
+    await('foo');
+
+In AMD world, it's like this:
+
+    require(['await'], function(await){
+        await('foo');
+    });
+
+In browsers where AMD isn't happening, it's like this:
+
+    await('foo');
+
 ## How does it work? (mad libs)
 
 await.js promises are like mad libs. In fact, here's a mad lib implemented using an await.js promise.

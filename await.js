@@ -320,7 +320,10 @@ SOFTWARE.
 
   // for node
   try {
-    exports.await = _await;
+    module.exports = _await;
+    // back compat, for people calling this lib
+    // like var await = require('await').await
+    module.exports.await = _await;
   } catch(err) {}
 
 })();

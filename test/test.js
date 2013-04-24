@@ -26,7 +26,7 @@ SOFTWARE.
 // http://visionmedia.github.com/mocha/
 
 var assert = require("assert")
-var await = require('../await').await
+var await = require('../await')
 
 describe('await', function(){
 

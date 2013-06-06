@@ -145,6 +145,21 @@ For every string you pass to the `await()` function, that's one piece of the pro
       // do something with got.m2
     })
 
+## Grouping promises by list
+
+If you have an array of promises of arbitrary length, you use `await.all()` to group them together.
+
+    var proms = collection.map(function(model){
+      return model.fetch()
+    })
+
+    ...
+
+    await.all(proms)
+    .onkeep(function(){
+      // all fetches were completed
+    })
+
 ## Chaining promises
 
 Promises can be explicitly chained instead of grouped. Here we've declared two promises, and we want to suck the output from one to the other:

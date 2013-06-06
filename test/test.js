@@ -537,6 +537,59 @@ describe('await', function(){
 
   // ###########################################################
 
+  describe('listing', function(){
+
+    it('should group promises by list synchronously', function(){
+      var worked = false
+      await.all([await(), await(), await()])
+      .onkeep(function(){
+        worked = true
+      })
+      assert.ok(worked)
+    })
+
+    it('should return the list', function(){
+      var worked = false
+      await.all([await(), await(), await()])
+      .onkeep(function(got){
+        worked = got.all.length === 3
+      })
+      assert.ok(worked)
+    })
+
+    it('should group promises by list asynchronously', function(done){
+      var p1 = await('x')
+      setTimeout(function(){ p1.keep('x') }, 0)
+      var p2 = await('x')
+      setTimeout(function(){ p2.keep('x') }, 0)
+      var p3 = await('x')
+      setTimeout(function(){ p3.keep('x') }, 0)
+
+      await.all([p1, p2, p3])
+      .onkeep(function(){ done() })
+    })
+
+    it('should fail properly', function(done){
+      var p1 = await('x')
+      p1.fail('fake fail')
+      var p2 = await('x')
+      setTimeout(function(){ p2.keep('x') }, 0)
+      await.all([p1, p2])
+      .onfail(function(){ done() })
+    })
+
+    it('should work immediately for empty lists', function(){
+      var worked = false
+      await.all([])
+      .onkeep(function(){
+        worked = true
+      })
+      assert.ok(worked)
+    })
+  })
+
+  // ###########################################################
+
   describe('keep and onkeep', function(){
 
     it('should support the empty case, synchronously', function(){

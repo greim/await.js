@@ -1,6 +1,6 @@
 {
     "name": "await"
-  , "version": "0.1.3"
+  , "version": "0.1.4"
   , "description": "Set-theoretical promises"
   , "keywords": ["promises", "futures", "deferreds", "asynchronous"]
   , "author": "Greg Reimer <gregreimer@gmail.com> (http://obadger.com/)"

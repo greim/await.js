@@ -4,7 +4,7 @@ await.js makes promises easy by re-thinking them in terms of set theory. You awa
 
 await.js has no library dependencies, and runs as-is in either browsers or in Node. "Await" was inspired by [IcedCoffeeScript](http://maxtaco.github.com/coffee-script/), wich is a concept worth checking out.
 
-*Old browser note* - you'll need some polyfill goodness to use it in browsers that don't support JavaScript 1.8.5. (e.g. IE8 and lower). To that end, example-polyfills.js is included in the git repo. The polyfills file has no test coverage, and is otherwise purely optional.
+*Old browser note* - you'll need some polyfill or Modernizr goodness to use it in browsers that don't support JavaScript 1.8.5. (e.g. IE8 and lower). To that end, example-polyfills.js is included in the git repo. The polyfills file has no test coverage, and is otherwise purely optional.
 
 ## Installation
 
@@ -249,35 +249,61 @@ The await.js library pattern is as follows:
 
 Examples are provided in the `examples` subfolder of the repo, including one for Backbone models and another for jQuery ajax.
 
-## Use in Node JS
+## Using `nodify()` in Node JS 
 
-Node JS uses a convention where callbacks are passed an error as the first argument. To save typing in a Node setting--or anywhere else this convention is used--await.js promises expose the nodify() method. Here's a basic example:
-
-    fs.readFile('/tmp/log', promise.nodify('logData'));
-
-Which is equivalent to:
+Node.js uses a convention where callback signatures have an error object in the first position. If operation was successful, this argument is simply set to null. Every node callback you write therefore needs an if/else statement, which can get tedious. To hook up an await promise to a node callback, you'd do this:
 
     fs.readFile('/tmp/log', function(err, data){
       if (err) {
-        promise.fail(err.message, err);
+        promise.fail(err);
       } else {
         promise.keep('logData', data);
       }
     });
 
-nodify() returns a function intended to be passed as a callback to an async Node method, which when called will keep or fail your promise, as appropriate. The list of names that you pass to nodify() are matched to arguments that Node passes to the callback, *after* the initial error argument. Beyond the error being first, Node's callback signature varies depending on the API, so here are some examples covering basic scenarios:
+To avoid this, when you have an await promise riding on the outcome of a node callback, you can wrap the callback in `promise.nodify()`, and it will wire up the error handling for you, shifting the `err` param off the signature automatically:
 
-### Callback signature (error, a, b, c)
+    fs.readFile('/tmp/log', promise.nodify(function(data){
+      promise.keep('logData', data);
+    }));
+
+To save even more typing, if you simply want to keep the promise based on the success value, then you can pass a string to `nodify()` instead of a function. This example below behaves equivalent to the above:
+
+    fs.readFile('/tmp/log', promise.nodify('logData'));
+
+Or, alternatively:
+
+    fs.readFile('/tmp/log', promise.nodify(function(data){
+      promise.keep('logData', data);
+    }));
+
+Both of which are equivalent to:
+
+    fs.readFile('/tmp/log', function(err, data){
+      if (err) {
+        promise.fail(err);
+      } else {
+        promise.keep('logData', data);
+      }
+    });
+
+### Passing a function to nodify()
+
+### Passing strings to nodify()
+
+The list of names that you pass to nodify() are matched to arguments that Node passes to the callback, *after* the initial error argument. Beyond the error being first, Node's callback signature varies depending on the API, so here are some examples covering basic scenarios:
+
+### Node's callback signature: (error, a, b, c)
 
     nodeApi.doSomethingAsync(promise.nodify('foo', 'bar'))
     // 'foo' and 'bar' are kept with value a and b, respectively. c is discarded
 
-### Callback signature (error)
+### Node's callback signature: (error)
 
     nodeApi.doSomethingAsync(promise.nodify('foo', 'bar'))
     // 'foo' and 'bar' are both kept with value null
 
-### Callback signature (error, a, b)
+### Node's callback signature (error, a, b)
 
     nodeApi.doSomethingAsync(promise.nodify(null, 'foo'))
     // 'foo' is kept with value b
@@ -324,7 +350,7 @@ nodify() returns a function intended to be passed as a callback to an async Node
       <td>itself</td>
     </tr>
     <tr>
-      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.fail(stringReason, ...)</td>
+      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.fail(...)</td>
       <td>Fail the promise for the given <code>reason</code>. The first argument is a string. Any number of subsequent arguments are allowed. The whole list of args will then be applied to all <code>onfail()</code> callbacks.</td>
       <td>itself</td>
     </tr>
@@ -345,7 +371,12 @@ nodify() returns a function intended to be passed as a callback to an async Node
     </tr>
     <tr>
       <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.nodify(item1, item2, ... itemN)</td>
-      <td>Get a callback function suitable for use in Node JS applications.</td>
+      <td>This method is intended for use with node.js's error-first callback signature. It returns a function that can be used as a callback in a node.js async call. If an error is passed to the callback, it fails the promise. Otherwise, success params are matched to each named item, in the order provided.</td>
+      <td>function</td>
+    </tr>
+    <tr>
+      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.nodify(callback[, context])</td>
+      <td>This method is intended for use with node.js's error-first callback signature. It returns a function that can be used as a callback in a node.js async call. If an error is passed to the callback, it fails the promise. Otherwise, the callback is executed with the given context, if provided.</td>
       <td>function</td>
     </tr>
   </tbody>

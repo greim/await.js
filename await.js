@@ -202,18 +202,24 @@ SOFTWARE.
     Convenience function for error-first Node JS callback convention.
     */
     PROMISE.nodify = function(){
-      var things = slice.call(arguments);
+      var items = slice.call(arguments);
       return function(err){
         if (err) {
-          PROMISE.fail(err.message, err);
+          PROMISE.fail(err);
         } else {
           var args = slice.call(arguments);
-          args.shift(); // lose the error
-          things.forEach(function(thing, idx){
-            if (thing !== null && thing !== undefined) {
-              PROMISE.keep(thing, args[idx]);
-            }
-          });
+          if (typeof items[0] === 'function') {
+            var cb = items[0];
+            var ctx = items[1];
+            cb.apply(ctx, args);
+          } else {
+            args.shift(); // lose the error
+            items.forEach(function(thing, idx){
+              if (thing !== null && thing !== undefined) {
+                PROMISE.keep(thing, args[idx]);
+              }
+            });
+          }
         }
       };
     };

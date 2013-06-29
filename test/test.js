@@ -269,6 +269,36 @@ describe('await', function(){
         done()
       })
     })
+
+    it('should work with a callback', function(done){
+      var prom = await('one')
+      fakeNodeMethod(prom.nodify(function(){
+        prom.keep('one')
+      }))
+      prom.onkeep(function(got){
+        done()
+      })
+      prom.onfail(function(){
+        done(new Error('Unexpected failure'))
+      })
+    })
+
+    it('should work with a callback and context', function(done){
+      var prom = await('one')
+      fakeNodeMethod(prom.nodify(function(){
+        if (this.foo === 'bar') {
+          prom.keep('one')
+        } else {
+          prom.fail(new Error('Wrong context'))
+        }
+      }, {foo:'bar'}))
+      prom.onkeep(function(got){
+        done()
+      })
+      prom.onfail(function(err){
+        done(err)
+      })
+    })
   })
 
   // ###########################################################

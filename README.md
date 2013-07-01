@@ -29,9 +29,9 @@ prom.onkeep(function(got){
 Node.js:
 
 ```
-%> npm install await
-%> node
-node> var await = require('await')
+%&gt; npm install await
+%&gt; node
+node&gt; var await = require('await')
 ```
 
 Browsers:

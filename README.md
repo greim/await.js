@@ -49,6 +49,7 @@ Browsers (AMD/RequireJS):
 ```html
 <script src="path/to/await.js"></script>
 <script>
+// window.await is NOT defined
 define(['await'], function(await){
   ...
 })

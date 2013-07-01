@@ -46,14 +46,11 @@ Browsers:
 
 Browsers (AMD/RequireJS):
 
-```html
-<script src="path/to/await.js"></script>
-<script>
+```javascript
 // window.await is NOT defined
 define(['await'], function(await){
   ...
 })
-</script>
 ```
 
 ## Old browser note

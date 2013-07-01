@@ -23,15 +23,16 @@ prom.onkeep(function(got){
   got.feed; // i got the feed
   got.user; // i got the user
 });
+```
 
 ## Installation and use
 
 Node.js:
 
 ```
-%&gt; npm install await
-%&gt; node
-node&gt; var await = require('await')
+%> npm install await
+%> node
+node> var await = require('await')
 ```
 
 Browsers:

@@ -616,6 +616,21 @@ describe('await', function(){
       })
       assert.ok(worked)
     })
+
+    it('should got all with a list of subgots', function(done){
+      var proms = [
+        await('foo').run(function(p){ setTimeout(function(){ p.keep('foo','a'); }, Math.floor(Math.random() * 33)) }),
+        await('foo').run(function(p){ setTimeout(function(){ p.keep('foo','b'); }, Math.floor(Math.random() * 33)) }),
+        await('foo').run(function(p){ setTimeout(function(){ p.keep('foo','c'); }, Math.floor(Math.random() * 33)) })
+      ]
+      await.all(proms)
+      .onkeep(function(got){
+        assert.strictEqual(got.all[0].foo, 'a')
+        assert.strictEqual(got.all[1].foo, 'b')
+        assert.strictEqual(got.all[2].foo, 'c')
+        done()
+      })
+    })
   })
 
   // ###########################################################

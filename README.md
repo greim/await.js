@@ -1,112 +1,143 @@
 # await.js
 
-await.js makes promises easy by re-thinking them in terms of set theory. You await() a set of things, and get back a promise with *keep* and *fail* events. In your *onkeep* event handler, you then have access to that set of things.
+await.js re-thinks promises in terms of set theory. You await() a set of outcomes, and your promise is kept once all those outcomes are realized.
 
-await.js has no library dependencies, and runs as-is in either browsers or in Node. "Await" was inspired by [IcedCoffeeScript](http://maxtaco.github.com/coffee-script/), wich is a concept worth checking out.
+## Examples
 
-*Old browser note* - you'll need some polyfill or Modernizr goodness to use it in browsers that don't support JavaScript 1.8.5. (e.g. IE8 and lower). To that end, example-polyfills.js is included in the git repo. The polyfills file has no test coverage, and is otherwise purely optional.
+```javascript
+// i need a user and a twitter feed
+var prom = await('user','latest-tweets');
 
-## Installation
+// provider code
+$.ajax('/api/user', {
+  success: function(data){ prom.keep('user', data) },
+  error: function(err) { prom.fail(err) }
+});
+$.ajax('/api/feed', {
+  success: function(data){ prom.keep('latest-tweets', data) },
+  error: function(err) { prom.fail(err) }
+});
 
-The installation process is highly sophisticated. Either...
+// outcome code
+prom.onkeep(function(got){
+  got.feed; // i got the feed
+  got.user; // i got the user
+});
 
-    <script src="path/to/await.js"></script>
+## Installation and use
 
-...or...
+Node.js:
 
-    npm install await
+```
+%> npm install await
+%> node
+node> var await = require('await')
+```
 
-...or clone the repo and do what you want.
+Browsers:
 
-## CommonJS versus AMD versus the global `await` object
+```html
+<script src="path/to/await.js"></script>
+<script>
+// window.await is defined
+</script>
+```
 
-All three are supported. In CommonJS world, it's like this:
+Browsers (AMD/RequireJS):
 
-    var await = require('await');
-    await('foo');
+```html
+<script src="path/to/await.js"></script>
+<script>
+define(['await'], function(await){
+  ...
+})
+</script>
+```
 
-In AMD world, it's like this:
+## Old browser note
 
-    require(['await'], function(await){
-        await('foo');
-    });
+You'll need some polyfill or Modernizr goodness to use it in browsers that don't support JavaScript 1.8.5. (e.g. IE8 and lower). To that end, example-polyfills.js is included in the git repo. The polyfills file has no test coverage, and is otherwise purely optional.
 
-In browsers where AMD isn't happening, it's like this:
-
-    await('foo');
-
-## How does it work? (mad libs)
+## How does it work?
 
 await.js promises are like mad libs. In fact, here's a mad lib implemented using an await.js promise.
 
-    // promise ourselves two nouns and an adjective
-    var prom = await('noun1', 'noun2', 'adjective')
+```javascript
+// promise ourselves two nouns and an adjective
+var prom = await('noun1', 'noun2', 'adjective')
 
-    // for demo purposes, just keep() each
-    // part of the promise immediately
-    // however, these could have been kept asynchronously
-    prom.keep('noun1', 'horse')
-    prom.keep('noun2', 'apple')
-    prom.keep('adjective', 'happy')
+// it doesn't matter when, how or in what
+// order you keep each item of the promise,
+// as long as they're all eventually kept
+prom.keep('noun1', 'horse')
+prom.keep('noun2', 'apple')
+prom.keep('adjective', 'happy')
 
-    prom.onkeep(function(got){
-      // now, we 'got' all the things we need!
-      console.log(
-      	"The %s eats the %s and is %s.",
-      	got.noun1,
-      	got.noun2,
-      	got.adjective
-      )
-      // "The horse eats the apple and is happy."
-    })
+prom.onkeep(function(got){
+  // now, we 'got' all the things we need!
+  console.log(
+  	"The %s eats the %s and is %s.",
+  	got.noun1,
+  	got.noun2,
+  	got.adjective
+  )
+  // "The horse eats the apple and is happy."
+})
+```
 
-The *keep* event fires when the last piece of the mad lib is complete. Here the words were gotten synchronously, but getting them asynchronously, and in any order, would have worked just as well.
+## Concept
 
-## What's the benefit? (separation of concerns)
+The existence of nested callbacks is a common criticism of JavaScript's asynchronous capabilities. However the mixture of concerns between provisioning code and outcome code is sometimes the real culprit. Nested callbacks are often a perfectly appropriate representation of asynchronous control flow, once the "what to do once I'm done" code is removed from the equation. Await's goal is to keep these concerns separate and break code into distinct areas of concern:
 
-await's set-theoretical approach breaks asynchronous tasks down into areas of concern that map well to the programmer's reasoning process. It starts with the up-front realization that you need to *await* a set of things you don't currently have:
+### Declaration
 
-    var prom = await('user', 'feed')
+```javascript
+var prom = await('user', 'feed')
+```
 
-...followed immediately by the question of how to get those things:
+### Provisioning
 
-    $.ajax('/api/current_user', {
-      success: function(data){ prom.keep('user', data) },
-      error: function(xhr){ prom.fail('error ' + xhr.status) }
-    })
-    $.ajax('/api/feed', {
-      success: function(data){ prom.keep('feed', data) }
-      error: function(xhr){ prom.fail('error ' + xhr.status) }
-    })
+```javascript
+$.ajax('/api/current_user', {
+  success: function(data){ prom.keep('user', data) },
+  error: function(xhr){ prom.fail(new Error('error ' + xhr.status)) }
+})
+$.ajax('/api/feed', {
+  success: function(data){ prom.keep('feed', data) }
+  error: function(xhr){ prom.fail(new Error('error ' + xhr.status)) }
+})
+setTimeout(function(){
+  prom.fail(new Error('10 second timeout'))
+},10000)
+```
+
+### Outcome
     
-...what to do once you have them:
-    
-    prom.onkeep(function(got){
-      alert('success!')
-      alert(got.user)
-      alert(got.feed)
-    })
-    
-...what to do if something goes wrong:
-    
-    prom.onfail(function(reason){
-      alert('error!')
-      alert(reason)
-    })
-    
-...and what to do in either case:
-    
-    prom.onresolve(function(){
-      alert('all done!')
-    })
+```javascript
+prom.onkeep(function(got){
+  alert('success!')
+  alert(got.user)
+  alert(got.feed)
+})
+```
 
-To save typing and/or to encapsulate the `prom` variable, you can also use the `run()` method and then chain the method calls together, in which case the above could be written as:
+### Error handling
+    
+```javascript
+prom.onfail(function(err){
+  alert(err.message)
+})
+```
 
-    await('user', 'feed')
-    .run(function(prom){ ...provider code... })
-    .onkeep(function(got){ ...consumer code... })
-    .onfail(function(reason){ ...error handling code... })
-    .onresolve(function(){ ...resolution code... })
+The `run()` method, combined with await's chaining, allows structuring code thusly:
+
+```javascript
+await('user', 'feed')
+.run(function(prom){ ...provider code... })
+.onkeep(function(got){ ...consumer code... })
+.onfail(function(reason){ ...error handling code... })
+.onresolve(function(){ ...in-any-case code... })
+```
 
 # Basic usage
 
@@ -116,197 +147,234 @@ For every string you pass to the `await()` function, that's one piece of the pro
 
 `await()` accepts other promises in addition to strings. In such cases, the newly-created promise is the *union* of all grouped promises and string arguments.
 
-    p1 = await('foo', 'bar')
-    p2 = await('baz')
-    p3 = await(p1, p2, 'qux')
+```javascript
+p1 = await('foo', 'bar')
+p2 = await('baz')
+p3 = await(p1, p2, 'qux')
 
-    ...
+...
 
-    p3.onkeep(function(got){
-      // do something with got.foo
-      // do something with got.bar
-      // do something with got.baz
-      // do something with got.qux
-    })
+p3.onkeep(function(got){
+  // do something with got.foo
+  // do something with got.bar
+  // do something with got.baz
+  // do something with got.qux
+})
+```
 
 `map()` returns a chained copy of the promise with updated names, and can be used to step around name collisions.
 
-    p1 = await('model')
-    p2 = await('model')
-    p3 = await(
-      p1.map({'model':'m1'}),
-      p2.map({'model':'m2'})
-    )
+```javascript
+p1 = await('model')
+p2 = await('model')
+p3 = await(
+  p1.map({'model':'m1'}),
+  p2.map({'model':'m2'})
+)
 
-    ...
+...
 
-    p3.onkeep(function(got){
-      // do something with got.m1
-      // do something with got.m2
-    })
+p3.onkeep(function(got){
+  // do something with got.m1
+  // do something with got.m2
+})
+```
 
 ## Grouping promises by list
 
 If you have an array of promises of arbitrary length, you use `await.all()` to group them together.
 
-    var proms = collection.map(function(model){
-      return model.fetch()
-    })
+```javascript
+var proms = collection.map(function(model){
+  return model.fetch()
+})
 
-    ...
+...
 
-    await.all(proms)
-    .onkeep(function(){
-      // all fetches were completed
-    })
+await.all(proms)
+.onkeep(function(){
+  // all fetches were completed
+})
+```
 
 ## Chaining promises
 
 Promises can be explicitly chained instead of grouped. Here we've declared two promises, and we want to suck the output from one to the other:
 
-    p1 = await('foo', 'bar', 'baz')
-    p2 = await('foo', 'bar', 'buz', 'qux')
+```
+p1 = await('foo', 'bar', 'baz')
+p2 = await('foo', 'bar', 'buz', 'qux')
 
-    p2      p1 
-    ===========
-    foo     foo
-    bar     bar
-    buz     baz
-    qux        
+p2      p1 
+===========
+foo     foo
+bar     bar
+buz     baz
+qux        
+```
 
 What happens is that p1 can *take* p2.
 
-    p1.take(p2)
+```
+p1.take(p2)
+```
 
 p1 now takes p2, and if p2 fails, p1 fails. As you can see, p2 is a different set of things than p1. How does p2 map to p1?
 
-    p2      p1 
-    ===========
-    foo --> foo
-    bar --> bar
-    buz     baz
-    qux        
+```
+p2      p1 
+===========
+foo --> foo
+bar --> bar
+buz     baz
+qux        
+```
 
 In other words, p1 only took the *intersection* of itself with p2. Thus when p2 keeps, p1 remains unkept. You can therefore optionally provide a mapping object:
 
-    p1.take(p2, {'buz':'baz'})
+```
+p1.take(p2, {'buz':'baz'})
 
-    p2      p1 
-    ===========  *p1 can now fire its keep event*
-    foo --> foo
-    bar --> bar
-    buz --> baz
-    qux        
+p2      p1 
+===========  *p1 can now fire its keep event*
+foo --> foo
+bar --> bar
+buz --> baz
+qux        
+```
 
 If the mapping you provide conflicts with direct matches, the mapping wins:
 
-    p1.take(p2, {
-      'buz':'baz',
-      'qux':'bar'
-    })
+```javascript
+p1.take(p2, {
+  'buz':'baz',
+  'qux':'bar'
+})
+```
 
-    p2      p1 
-    ===========
-    foo --> foo
-    qux --> bar
-    buz --> baz
-    bar        
+```
+p2      p1 
+===========
+foo --> foo
+qux --> bar
+buz --> baz
+bar        
+```
+
+## Aggregating an unknown-length list of promises
+
+When you have a list of things to do of arbitrary length, you can use `await.all(array)` to return a promise over all of those items.
+
+```javascript
+var proms = urls.map(function(url){
+  return await('data')
+  .run(function(prom){
+    $.ajax(url, {
+      success: function(data){ prom.keep('fetch', data) },
+      error: function(xhr){ prom.fail(new Error('request error')) }
+    })
+  })
+})
+
+await.all(proms)
+.onkeep(function(got){
+  // alert the data from the fourth url
+  alert(got.all[3].data)
+})
+```
 
 ## Error handling
 
 Error handling is accomplished via the `fail()` and `onfail()` methods. The error message passed to `fail()` is what the `onfail()` callback receives. Any subsequent arguments passed to `fail()` are also applied to the `onfail()` callback, which is useful for debugging, etc.
 
-    await('thing')
-    .fail('oops!', 1, 2, 3)
-    .onfail(function(){
-      alert([].slice.call(arguments).join(','))
-      // "oops!,1,2,3"
-    })
+```javascript
+await('thing')
+.fail('oops!', 1, 2, 3)
+.onfail(function(){
+  alert([].slice.call(arguments).join(','))
+  // "oops!,1,2,3"
+})
+```
 
 ## Not everything needs a value
 
 Sometimes you might only want to await something to *happen*, without necessarily needing a value back from it. In that case, just leave off the second parameter to `keep()` and it will default to null:
 
-    await('domReady', 'feed')
-    .run(function(prom){
-      $(document).ready(function(){
-        prom.keep('domReady') // left off second param
-      })
-      fetchFeed(function(feed){
-        prom.keep('feed', feed)
-      })
-    })
-    .onkeep(function(got){
-      // got.feed contains data
-      // got.domReady === null
-    })
+```javascript
+await('domReady', 'feed')
+.run(function(prom){
+  $(document).ready(function(){
+    prom.keep('domReady') // left off second param
+  })
+  fetchFeed(function(feed){
+    prom.keep('feed', feed)
+  })
+})
+.onkeep(function(got){
+  // got.feed contains data
+  // got.domReady === null
+})
+```
 
 ## Library pattern
 
 The await.js library pattern is as follows:
 
-    return await(...).run(...)
+```javascript
+return await(...).run(...)
+```
 
 Examples are provided in the `examples` subfolder of the repo, including one for Backbone models and another for jQuery ajax.
 
 ## Using `nodify()` in Node JS 
 
-Node.js uses a convention where callback signatures have an error object in the first position. If operation was successful, this argument is simply set to null. Every node callback you write therefore needs an if/else statement, which can get tedious. To hook up an await promise to a node callback, you'd do this:
+Node.js uses a convention where callback signatures have an error object in the first position. If the operation was successful, this argument is null. Every node callback you write therefore needs an if/else statement, which can get tedious. To hook up an await promise to a node callback for example, you'd do this:
 
-    fs.readFile('/tmp/log', function(err, data){
-      if (err) {
-        promise.fail(err);
-      } else {
-        promise.keep('logData', data);
-      }
-    });
+```javascript
+fs.readFile('/tmp/log', function(err, data){
+  if (err) {
+    promise.fail(err);
+  } else {
+    promise.keep('logData', data);
+  }
+});
+```
 
 To avoid this, when you have an await promise riding on the outcome of a node callback, you can wrap the callback in `promise.nodify()`, and it will wire up the error handling for you, shifting the `err` param off the signature automatically:
 
-    fs.readFile('/tmp/log', promise.nodify(function(data){
-      promise.keep('logData', data);
-    }));
+```javascript
+fs.readFile('/tmp/log', promise.nodify(function(data){
+  promise.keep('logData', data);
+}));
+```
 
 To save even more typing, if you simply want to keep the promise based on the success value, then you can pass a string to `nodify()` instead of a function. This example below behaves equivalent to the above:
 
-    fs.readFile('/tmp/log', promise.nodify('logData'));
+```javascript
+fs.readFile('/tmp/log', promise.nodify('logData'));
+```
 
-Or, alternatively:
+### Examples
 
-    fs.readFile('/tmp/log', promise.nodify(function(data){
-      promise.keep('logData', data);
-    }));
+#### Callback signature: (error, a, b, c)
 
-Both of which are equivalent to:
+```javascript
+nodeApi.doSomething(promise.nodify('foo', 'bar'))
+// 'foo' and 'bar' are kept with values a and b, respectively. c is ignored
+```
+#### Callback signature: (error)
 
-    fs.readFile('/tmp/log', function(err, data){
-      if (err) {
-        promise.fail(err);
-      } else {
-        promise.keep('logData', data);
-      }
-    });
+```javascript
+nodeApi.doSomething(promise.nodify('foo', 'bar'))
+// 'foo' and 'bar' are both kept with value null
+```
 
-### Passing a function to nodify()
+#### Callback signature (error, a, b)
 
-### Passing strings to nodify()
-
-The list of names that you pass to nodify() are matched to arguments that Node passes to the callback, *after* the initial error argument. Beyond the error being first, Node's callback signature varies depending on the API, so here are some examples covering basic scenarios:
-
-### Node's callback signature: (error, a, b, c)
-
-    nodeApi.doSomethingAsync(promise.nodify('foo', 'bar'))
-    // 'foo' and 'bar' are kept with value a and b, respectively. c is discarded
-
-### Node's callback signature: (error)
-
-    nodeApi.doSomethingAsync(promise.nodify('foo', 'bar'))
-    // 'foo' and 'bar' are both kept with value null
-
-### Node's callback signature (error, a, b)
-
-    nodeApi.doSomethingAsync(promise.nodify(null, 'foo'))
-    // 'foo' is kept with value b
+```javascript
+nodeApi.doSomething(promise.nodify(null, 'foo'))
+// 'foo' is kept with value b, a is ignored
+```
 
 ## API overview
 
@@ -386,64 +454,77 @@ The list of names that you pass to nodify() are matched to arguments that Node p
 
 For convenience, all methods that take callbacks also take a second context arg.
 
-    await().onkeep(function(){
-      // this this is now that this
-    }, this)
+```javascript
+await().onkeep(function(){
+  // this this is now that this
+}, this)
+```
 
 Empty promises are legal and keep immediately.
 
-    await().onkeep(function(got){
-      alert(JSON.stringify(got));
-      // '{}'
-    })
+```javascript
+await().onkeep(function(got){
+  alert(JSON.stringify(got));
+  // '{}'
+})
+```
 
 Once a promise is either kept or failed, subsequent calls to `keep()` or `fail()` are silently ignored.
 
-    await('greeting')
-    .keep('greeting', 'hi')
-    .keep('greeting', 'hello')
-    .fail('no greeting for you')
-    .onkeep(function(got){
-      alert(got.greeting);
-      // 'hi'
-    })
+```javascript
+await('greeting')
+.keep('greeting', 'hi')
+.keep('greeting', 'hello')
+.fail('no greeting for you')
+.onkeep(function(got){
+  alert(got.greeting);
+  // 'hi'
+})
+```
 
 `await()` arguments are coerced to strings.
 
-    await({}) // {} is converted to string, but it's legal
-              // you'd just have to say promise.keep("[object Object]")!
+```javascript
+await({}) // {} is converted to string, but it's legal
+          // you'd just have to say promise.keep("[object Object]")!
+```
 
 There's nothing magical about `promise.run()`. It just runs the given function, passing itself to the callback, and returning itself for chainability.
 
-    var refB
-    var refA = await().run(function(promise){
-      refB = promise
-    })
-    alert(refA === refB)
-    // "true"
+```javascript
+var refB
+var refA = await().run(function(promise){
+  refB = promise
+})
+alert(refA === refB)
+// "true"
+```
 
 `promise.run()` just avoids depositing a variable in scope, provides a handy closure, and keeps things grouped nicely.
 
-    // these are the same
+```javascript
+// these are the same
 
-    var promise = await('greeting');
-    promise.keep('greeting', 'hi');
-    return promise;
+var promise = await('greeting');
+promise.keep('greeting', 'hi');
+return promise;
 
-    return await('greeting')
-    .run(function(promise){
-      promise.keep('greeting', 'hi');
-    })
+return await('greeting')
+.run(function(promise){
+  promise.keep('greeting', 'hi');
+})
+```
 
 `promise.onkeep()`, `promise.onresolve()`, and `promise.onfail()` can be called at any time, an arbitrary number of times. They're executed in the order added.
 
-    await()
-    .onfail(function(){ alert('fail1') })
-    .onkeep(function(){ alert('keep1') })
-    .onresolve(function(){ alert('resolve') })
-    .onkeep(function(){ alert('keep2') })
-    .onfail(function(){ alert('fail2') })
+```javascript
+await()
+.onfail(function(){ alert('fail1') })
+.onkeep(function(){ alert('keep1') })
+.onresolve(function(){ alert('resolve') })
+.onkeep(function(){ alert('keep2') })
+.onfail(function(){ alert('fail2') })
 
-    // in case of fail, alerts 'fail1' > 'resolve' > 'fail2'
-    // in case of keep, alerts 'keep1' > 'resolve' > 'keep2'
-
+// in case of fail, alerts 'fail1' > 'resolve' > 'fail2'
+// in case of keep, alerts 'keep1' > 'resolve' > 'keep2'
+```

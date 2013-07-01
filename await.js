@@ -313,11 +313,15 @@ SOFTWARE.
   // CHAPTER 8 - AWAITING LISTS
 
   _await.all = function(list) {
+    var gots = [];
     var newList = list.map(function(prom, idx){
       var key = 'p'+idx;
       return _await(key)
       .run(function(p){
-        prom.onkeep(function(){ p.keep(key); });
+        prom.onkeep(function(got){
+          gots[idx] = got;
+          p.keep(key);
+        });
         prom.onfail(p.fail);
       });
     });
@@ -326,7 +330,7 @@ SOFTWARE.
       _await.apply(this, newList)
       .onfail(prom.fail)
       .onkeep(function(){
-        prom.keep('all', list);
+        prom.keep('all', gots);
       });
     });
   };

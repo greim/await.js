@@ -216,6 +216,26 @@ describe('await', function(){
 
   // ###########################################################
 
+  describe('#failer()', function(){
+    it('should work', function(done){
+      var p1 = await('a')
+      var p2 = await('b')
+      var err = new Error()
+      p2.onfail(p1.failer())
+      p2.fail(err)
+      p1.onfail(function(reason){
+        try {
+          assert.strictEqual(err,reason)
+          done()
+        } catch(ex) {
+          done(ex)
+        }
+      })
+    })
+  })
+
+  // ###########################################################
+
   describe('#nodify()', function(){
 
     function fakeNodeMethod(cb){
@@ -672,8 +692,13 @@ describe('await', function(){
 
     it('should work immediately for empty lists', function(done){
       await.all([])
-      .onkeep(function(){
-        done()
+      .onkeep(function(got){
+        try {
+          assert.strictEqual(got.length, 0)
+          done()
+        } catch(ex) {
+          done(ex)
+        }
       })
     })
 
@@ -685,10 +710,14 @@ describe('await', function(){
       ]
       await.all(proms)
       .onkeep(function(got){
-        assert.strictEqual(got[0].foo, 'a')
-        assert.strictEqual(got[1].foo, 'b')
-        assert.strictEqual(got[2].foo, 'c')
-        done()
+        try {
+          assert.strictEqual(got[0].foo, 'a')
+          assert.strictEqual(got[1].foo, 'b')
+          assert.strictEqual(got[2].foo, 'c')
+          done()
+        } catch(ex) {
+          done(ex)
+        }
       })
     })
   })

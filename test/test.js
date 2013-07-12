@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2012 by Greg Reimer
+Copyright (c) 2013 by Greg Reimer
 https://github.com/greim
 http://obadger.com/
 
@@ -27,6 +27,7 @@ SOFTWARE.
 
 var assert = require("assert")
 var await = require('../await')
+var Q = require('q')
 
 describe('await', function(){
 
@@ -72,22 +73,22 @@ describe('await', function(){
       assert.strictEqual(ref1, ref2)
     })
 
-    it('should work', function(){
-      var worked = false
-      await().onkeep(function(){ worked = true })
-      assert.ok(worked)
+    it('should work', function(done){
+      await('foo').keep('foo').onkeep(function(){ done() })
     })
 
-    it('should let synchronous keeps be synchronous', function(){
-      var synch = false
-      await().onkeep(function(){ synch = true })
-      assert.ok(synch)
+    it('should not fire keep before return', function(){
+      var async = true
+      await('foo').keep('foo').onkeep(function(){ async = false })
+      assert.ok(async)
     })
 
-    it('should accept a context for the callback', function(){
-      var ref1 = {}, ref2 = false;
-      await().onkeep(function(){ ref2 = this }, ref1);
-      assert.strictEqual(ref1, ref2)
+    it('should accept a context for the callback', function(done){
+      var ref1 = {};
+      await('foo').keep('foo').onkeep(function(){
+        assert.strictEqual(ref1, this)
+        done()
+      }, ref1);
     })
   })
 
@@ -101,22 +102,24 @@ describe('await', function(){
       assert.strictEqual(ref1, ref2)
     })
 
-    it('should work', function(){
-      var failWorked = false
-      await('foo').fail().onfail(function(){ failWorked = true })
-      assert.ok(failWorked)
+    it('should work', function(done){
+      await('foo').fail().onfail(function(){
+        done()
+      })
     })
 
-    it('should let synchronous fails be synchronous', function(){
-      var synch = false
-      await('foo').fail().onfail(function(){ synch = true })
-      assert.ok(synch)
+    it('should not fire onfail before returning', function(){
+      var async = true
+      await('foo').fail().onfail(function(){ async = false })
+      assert.ok(async)
     })
 
-    it('should accept a context for the callback', function(){
-      var ref1 = {}, ref2 = false;
-      await('foo').fail().onfail(function(){ ref2 = this }, ref1);
-      assert.strictEqual(ref1, ref2)
+    it('should accept a context for the callback', function(done){
+      var ref1 = {};
+      await('foo').fail().onfail(function(){
+        assert.strictEqual(ref1, this)
+        done()
+      }, ref1);
     })
   })
 
@@ -131,23 +134,27 @@ describe('await', function(){
     })
 
     it('should happen on keep', function(done){
-      await().onresolve(done)
+      await('foo').keep('foo').onresolve(done)
     })
 
     it('should happen on fail', function(done){
       await('foo').fail().onresolve(done)
     })
 
-    it('should accept a context for the callback', function(){
-      var ref1 = {}, ref2 = false;
-      await().onkeep(function(){ ref2 = this }, ref1);
-      assert.strictEqual(ref1, ref2)
+    it('should accept a context for the callback', function(done){
+      var ref1 = {};
+      await('foo').keep('foo').onkeep(function(){
+        assert.strictEqual(ref1, this)
+        done()
+      }, ref1);
     })
 
-    it('should accept a context for the callback', function(){
-      var ref1 = {}, ref2 = false;
-      await().onresolve(function(){ ref2 = this }, ref1);
-      assert.strictEqual(ref1, ref2)
+    it('should accept a context for the callback', function(done){
+      var ref1 = {};
+      await('foo').keep('foo').onresolve(function(){
+        assert.strictEqual(ref1, this)
+        done()
+      }, ref1);
     })
   })
 
@@ -161,22 +168,24 @@ describe('await', function(){
       assert.strictEqual(ref1, ref2)
     })
 
-    it('should work', function(){
-      var worked = false
-      await('foo').keep('foo').onkeep(function(){ worked = true })
-      assert.ok(worked)
-    })
-
-    it('should only work when supposed to', function(){
-      await('foo').onkeep(function(){
-        assert.ok(false)
+    it('should work', function(done){
+      await('foo').keep('foo').onkeep(function(){
+        done()
       })
     })
 
-    it('should take first keep of dupe keeps', function(){
+    it('should only work when supposed to', function(done){
+      await('foo').onkeep(function(){
+        assert.ok(false)
+      })
+      setTimeout(done, 1)
+    })
+
+    it('should take first keep of dupe keeps', function(done){
       await('foo').keep('foo','x').keep('foo','y')
       .onkeep(function(got){
         assert.strictEqual(got.foo, 'x')
+        done()
       })
     })
 
@@ -198,10 +207,10 @@ describe('await', function(){
       assert.strictEqual(ref1, ref2)
     })
 
-    it('should work', function(){
-      var worked = false
-      await('foo').fail().onfail(function(){ worked = true })
-      assert.ok(worked)
+    it('should work', function(done){
+      await('foo').fail().onfail(function(){
+        done()
+      })
     })
   })
 
@@ -229,7 +238,7 @@ describe('await', function(){
         done()
       })
       prom.onfail(function(){
-        done(new Error('Unexpected failure'))
+        done(new Error())
       })
     })
 
@@ -312,38 +321,37 @@ describe('await', function(){
       assert.strictEqual(ref1, ref2)
     })
 
-    it('should work', function(){
-      var worked = false
+    it('should work', function(done){
       var p1 = await('foo')
       var p2 = await('foo')
       p1.take(p2)
       p2.keep('foo')
-      p1.onkeep(function(){ worked = true })
-      assert.ok(worked)
+      p1.onkeep(function(){
+        done()
+      })
     })
 
-    it('should take intersection', function(){
-      var worked = false
+    it('should take intersection', function(done){
       var p1 = await('foo','bar')
       var p2 = await('foo','baz')
       p1.take(p2).keep('bar')
       p2.keep('foo').keep('baz')
-      p1.onkeep(function(){ worked = true })
-      assert.ok(worked)
+      p1.onkeep(function(){
+        done()
+      })
     })
 
-    it('should allow mapping', function(){
-      var worked = false
+    it('should allow mapping', function(done){
       var p1 = await('foo','bar')
       var p2 = await('foo','baz')
       p1.take(p2, {'baz':'bar'})
       p2.keep('foo').keep('baz')
-      p1.onkeep(function(){ worked = true })
-      assert.ok(worked)
+      p1.onkeep(function(){
+        done()
+      })
     })
 
-    it('should favor mappings over direct matches', function(){
-      var worked = false
+    it('should favor mappings over direct matches', function(done){
       var p1 = await('foo','bar')
       var p2 = await('foo','bar','baz')
       p1.take(p2, {'baz':'bar'})
@@ -351,19 +359,43 @@ describe('await', function(){
       p1.onkeep(function(got){
         assert.strictEqual(got.foo, 'foo')
         assert.strictEqual(got.bar, 'baz')
-        worked = true
+        done()
       })
-      assert.ok(worked)
     })
 
-    it('should chain failures too', function(){
-      var message = false, err = 'oops'
+    it('should chain failures too', function(done){
+      var err = 'oops'
       var p1 = await('foo')
       var p2 = await('foo')
       p1.take(p2)
       p2.fail(err)
-      p1.onfail(function(mess){ message = mess })
-      assert.strictEqual(err, message)
+      p1.onfail(function(mess){
+        assert.strictEqual(err, mess)
+        done()
+      })
+    })
+
+    it('should take fulfilled thenables', function(done){
+      var t = Q.fcall(function(){
+        return 1
+      })
+      await('foo').take(t, 'foo')
+      .onkeep(function(got){
+        assert.strictEqual(got.foo, 1)
+        done()
+      })
+    })
+
+    it('should take rejected thenables', function(done){
+      var err = new Error()
+      var t = Q.fcall(function(){
+        throw err
+      })
+      await('foo').take(t, 'foo')
+      .onfail(function(reason){
+        assert.strictEqual(reason, err)
+        done()
+      })
     })
   })
 
@@ -403,33 +435,28 @@ describe('await', function(){
 
   describe('#map()', function(){
 
-    it('should work for single-item promises', function(){
-      var worked = false;
+    it('should work for single-item promises', function(done){
       var p1 = await('foo')
       var p2 = p1.map({'foo':'bar'})
       p1.keep('foo','yes')
       p2.onkeep(function(got){
         assert.strictEqual(got.bar,'yes')
-        worked = true;
+        done()
       })
-      assert.ok(worked)
     })
 
-    it('should only pass the mapped item', function(){
-      var worked = false;
+    it('should only pass the mapped item', function(done){
       var p1 = await('foo')
       var p2 = p1.map({'foo':'bar'})
       p1.keep('foo','yes')
       p2.onkeep(function(got){
         assert.strictEqual(got.bar,'yes')
         assert.strictEqual(Object.keys(got).length,1)
-        worked = true;
+        done()
       })
-      assert.ok(worked)
     })
 
-    it('should work for multi-item promises', function(){
-      var worked = false;
+    it('should work for multi-item promises', function(done){
       var p1 = await('foo','baz')
       var p2 = p1.map({'foo':'bar','baz':'qux'})
       p1.keep('foo','yes')
@@ -437,13 +464,11 @@ describe('await', function(){
       p2.onkeep(function(got){
         assert.strictEqual(got.bar,'yes')
         assert.strictEqual(got.qux,'yes')
-        worked = true;
+        done()
       })
-      assert.ok(worked)
     })
 
-    it('should work for partial mappings', function(){
-      var worked = false;
+    it('should work for partial mappings', function(done){
       var p1 = await('foo','baz')
       var p2 = p1.map({'foo':'bar'})
       p1.keep('foo','yes')
@@ -451,13 +476,11 @@ describe('await', function(){
       p2.onkeep(function(got){
         assert.strictEqual(got.bar,'yes')
         assert.strictEqual(got.baz,'yes')
-        worked = true;
+        done()
       })
-      assert.ok(worked)
     })
 
-    it('should work for empty mappings', function(){
-      var worked = false;
+    it('should work for empty mappings', function(done){
       var p1 = await('foo','baz')
       var p2 = p1.map({})
       p1.keep('foo','yes')
@@ -465,9 +488,8 @@ describe('await', function(){
       p2.onkeep(function(got){
         assert.strictEqual(got.foo,'yes')
         assert.strictEqual(got.baz,'yes')
-        worked = true;
+        done()
       })
-      assert.ok(worked)
     })
 
     it('should work asynchronously', function(done){
@@ -491,23 +513,61 @@ describe('await', function(){
 
   // ###########################################################
 
+  describe('#buildState()', function(){
+
+    it('should work', function(done){
+      await().buildState('foo').keep('foo','x')
+      .onkeep(function(got){
+        assert.strictEqual(got.foo, 'x')
+        done()
+      })
+    })
+
+    it('should be chainable', function(){
+      var r1 = await()
+      var r2 = r1.buildState('foo')
+      assert.strictEqual(r1,r2)
+    })
+
+    it('should allow buildState() on empty promises', function(){
+      await().buildState('foo')
+    })
+
+    it('should disallow buildState() on non-empty promises', function(){
+      try {
+        await('foo').buildState('foo')
+        assert.ok(false)
+      } catch(ex) {}
+    })
+  })
+
+  // ###########################################################
+
   describe('factory function', function(){
 
-    it('should use series of strings', function(){
-      var worked = false
+    it('should use series of strings', function(done){
       await('foo','bar')
       .keep('foo')
       .keep('bar')
-      .onkeep(function(){ worked = true })
-      assert.ok(worked)
+      .onkeep(function(){
+        done()
+      })
     })
 
-    it('should coerce args to strings', function(){
-      var worked = false
+    it('should coerce args to strings', function(done){
       await({})
       .keep('[object Object]')
-      .onkeep(function(){ worked = true })
-      assert.ok(worked)
+      .onkeep(function(){
+        done()
+      })
+    })
+
+    it('should not keep immediately with no arguments', function(done){
+      await()
+      .onkeep(function(){
+        done(new Error())
+      })
+      setTimeout(done,1)
     })
   })
 
@@ -515,8 +575,8 @@ describe('await', function(){
 
   describe('grouping', function(){
 
-    it('should group promises synchronously', function(){
-      var worked = false;
+    it('should not group promises synchronously', function(){
+      var worked = true;
       var p1 = await('foo','bar').keep('foo').keep('bar')
       var p2 = await('baz').keep('baz')
       await(p1, p2)
@@ -524,7 +584,7 @@ describe('await', function(){
         assert.ok(got.hasOwnProperty('foo'))
         assert.ok(got.hasOwnProperty('bar'))
         assert.ok(got.hasOwnProperty('baz'))
-        worked = true
+        worked = false
       })
       assert.ok(worked)
     })
@@ -554,13 +614,14 @@ describe('await', function(){
       })
     })
 
-    it('should group promises using mapping', function(){
+    it('should group promises using mapping', function(done){
       var p1 = await('foo').keep('foo')
       var p2 = await('foo').keep('foo')
       await(p1, p2.map({'foo':'bar'}))
       .onkeep(function(got){
         assert.ok(got.hasOwnProperty('foo'))
         assert.ok(got.hasOwnProperty('bar'))
+        done()
       })
     })
   })
@@ -569,22 +630,29 @@ describe('await', function(){
 
   describe('listing', function(){
 
-    it('should group promises by list synchronously', function(){
-      var worked = false
-      await.all([await(), await(), await()])
+    it('should not group promises by list synchronously', function(){
+      var worked = true
+      await.all([
+        await('foo').keep('foo'),
+        await('bar').keep('bar'),
+        await('baz').keep('baz')
+      ])
       .onkeep(function(){
-        worked = true
+        worked = false
       })
       assert.ok(worked)
     })
 
-    it('should return the list', function(){
-      var worked = false
-      await.all([await(), await(), await()])
+    it('should return the list', function(done){
+      await.all([
+        await('foo').keep('foo'),
+        await('bar').keep('bar'),
+        await('baz').keep('baz')
+      ])
       .onkeep(function(got){
-        worked = got.all.length === 3
+        assert.strictEqual(got.all.length, 3)
+        done()
       })
-      assert.ok(worked)
     })
 
     it('should group promises by list asynchronously', function(done){
@@ -608,13 +676,11 @@ describe('await', function(){
       .onfail(function(){ done() })
     })
 
-    it('should work immediately for empty lists', function(){
-      var worked = false
+    it('should work immediately for empty lists', function(done){
       await.all([])
       .onkeep(function(){
-        worked = true
+        done()
       })
-      assert.ok(worked)
     })
 
     it('should got all with a list of subgots', function(done){
@@ -637,25 +703,19 @@ describe('await', function(){
 
   describe('keep and onkeep', function(){
 
-    it('should support the empty case, synchronously', function(){
-      var worked = false
-      await().onkeep(function(){ worked = true })
-      assert.ok(worked)
-    })
-
-    it('should support the single-var case, synchronously', function(){
-      var worked = false
+    it('should not support the single-var case, synchronously', function(){
+      var worked = true
       await('foo').keep('foo')
-      .onkeep(function(){ worked = true })
+      .onkeep(function(){ worked = false })
       assert.ok(worked)
     })
 
-    it('should support the many-var case, synchronously', function(){
-      var worked = false
+    it('should not support the many-var case, synchronously', function(){
+      var worked = true
       await('foo','bar')
       .keep('foo')
       .keep('bar')
-      .onkeep(function(){ worked = true })
+      .onkeep(function(){ worked = false })
       assert.ok(worked)
     })
 
@@ -752,11 +812,11 @@ describe('await', function(){
 
   describe('fail and onfail', function(){
 
-    it('should work synchronously', function(){
-      var worked = false
+    it('should not work synchronously', function(){
+      var worked = true
       await('bar')
       .fail()
-      .onfail(function(){ worked = true })
+      .onfail(function(){ worked = false })
       assert.ok(worked)
     })
 
@@ -768,14 +828,17 @@ describe('await', function(){
       .onfail(function(){ done() })
     })
 
-    it('should ignore multiple fails', function(){
-      var worked = false
+    it('should ignore multiple fails', function(done){
+      var failCalls = 0
       await('bar')
       .fail()
       .fail()
       .fail()
-      .onfail(function(){ worked = true })
-      assert.ok(worked)
+      .onfail(function(){ failCalls++ })
+      setTimeout(function(){
+        assert.strictEqual(failCalls, 1)
+        done()
+      },1)
     })
 
     it('should pass all args to callback', function(){
@@ -792,9 +855,9 @@ describe('await', function(){
 
   // ###########################################################
 
-  describe('execution sequence', function(){
+  describe('sequence', function(){
 
-    it('should fire correct events in correct order on keep', function(){
+    it('should fire correct events in correct order on keep', function(done){
       var seq = []
       await('bar')
       .keep('bar')
@@ -803,10 +866,13 @@ describe('await', function(){
       .onresolve(function(){ seq.push('e') })
       .onfail(function(){ seq.push('x') })
       .onkeep(function(){ seq.push('s') })
-      assert.strictEqual(seq.join(''), 'yes')
+      setTimeout(function(){
+        assert.strictEqual(seq.join(''), 'yes')
+        done()
+      },1)
     })
 
-    it('should fire correct events in correct order on fail', function(){
+    it('should fire correct events in correct order on fail', function(done){
       var seq = []
       await('bar')
       .fail('oops')
@@ -815,17 +881,274 @@ describe('await', function(){
       .onresolve(function(){ seq.push('e') })
       .onkeep(function(){ seq.push('x') })
       .onfail(function(){ seq.push('s') })
-      assert.strictEqual(seq.join(''), 'yes')
+      setTimeout(function(){
+        assert.strictEqual(seq.join(''), 'yes')
+        done()
+      },1)
     })
 
-    it('should promote keep above fail', function(){
+    it('should promote keep above fail', function(done){
       var status = 'start';
       await('bar')
       .keep('bar')
       .fail('oops')
       .onfail(function(){ status = 'fail' })
       .onkeep(function(){ status = 'keep' })
-      assert.strictEqual('keep', status);
+      setTimeout(function(){
+        assert.strictEqual('keep', status);
+        done()
+      },1)
+    })
+  })
+
+  // ###########################################################
+
+  describe('prototype', function(){
+
+    it('should be an instance of await', function(){
+      assert.ok(await() instanceof await)
+    })
+  })
+
+  // ###########################################################
+
+  describe('promises/a+ then', function(){
+
+    it('should exist', function(){
+      assert.ok(typeof await().then === 'function')
+    })
+
+    it('should call onfulfilled when fulfilled', function(done){
+      await('foo').keep('foo').then(function(val){
+        done()
+      },function(){})
+    })
+
+    it('should call onrejected when rejected', function(done){
+      await('foo').fail().then(function(){},function(val){
+        done()
+      })
+    })
+
+    it('should not call onrejected when fulfilled', function(done){
+      await('foo').keep('foo').then(function(){},function(){
+        done(new Error())
+      })
+      setTimeout(done,1)
+    })
+
+    it('should not call onfulfilled when rejected', function(done){
+      await('foo').fail().then(function(){
+        done(new Error())
+      },function(){})
+      setTimeout(done,1)
+    })
+
+    it('should pass "got" as the fulfillment value', function(done){
+      await('foo').keep('foo','x').then(function(got){
+        assert.strictEqual(got.foo, 'x')
+        done()
+      })
+    })
+
+    it('should pass the reason to onrejected', function(done){
+      await('foo').fail('x').then(null,function(reason){
+        assert.strictEqual(reason, 'x')
+        done()
+      })
+    })
+
+    it('should ignore args that are not functions', function(done){
+      await('foo').keep('foo').then(null, null)
+      await('foo').fail().then(null, null)
+      setTimeout(done,1)
+    })
+
+    it('should not call onfulfilled more than once', function(done){
+      var calls = 0
+      await('foo')
+      .keep('foo')
+      .keep('foo')
+      .keep('foo')
+      .then(function(){ calls++; })
+      setTimeout(function(){
+        assert.strictEqual(calls,1)
+        done()
+      },1)
+    })
+
+    it('should not call onrejected more than once', function(done){
+      var calls = 0
+      await('foo')
+      .fail()
+      .fail()
+      .fail()
+      .then(null,function(){ calls++; })
+      setTimeout(function(){
+        assert.strictEqual(calls,1)
+        done()
+      },1)
+    })
+
+    it('should return before onfulfilled is called', function(done){
+      var order = []
+      await('foo')
+      .keep('foo')
+      .then(function(){
+        order.push('then')
+      })
+      order.push('now')
+      setTimeout(function(){
+        assert.strictEqual(order.join(','), 'now,then')
+        done()
+      },1)
+    })
+
+    it('should be callable multiple times', function(done){
+      var calls = 0
+
+      var p1 = await('foo').keep('foo','x')
+      p1.then(function(got){ calls++ })
+      p1.then(function(got){ calls++ })
+      p1.then(function(got){ calls++ })
+
+      var p2 = await('foo').fail()
+      p2.then(null, function(got){ calls++ })
+      p2.then(null, function(got){ calls++ })
+      p2.then(null, function(got){ calls++ })
+
+      setTimeout(function(){
+        assert.strictEqual(calls, 6)
+        done()
+      },1)
+    })
+
+    it('should be called in the order given', function(done){
+      var order = ''
+
+      var p1 = await('foo').keep('foo','x')
+      p1.then(function(got){ order += 'y' })
+      p1.then(function(got){ order += 'e' })
+      p1.then(function(got){ order += 's' })
+
+      p1.then(function(){
+        var p2 = await('foo').fail()
+        p2.then(null, function(got){ order += 's' })
+        p2.then(null, function(got){ order += 'i' })
+        p2.then(null, function(got){ order += 'r' })
+
+        setTimeout(function(){
+          assert.strictEqual(order, 'yessir')
+          done()
+        },1)
+      })
+    })
+
+    it('should return a promise', function(){
+      assert.ok(await().then() instanceof await)
+    })
+
+    it('should return a promise which assumes the eventual state of a promise returned from onfulfilled', function(done){
+      var p2 = await('foo').keep('foo','x')
+      .then(function(got){
+        return await('bar').keep('bar','x')
+      })
+      .then(function(got){
+        assert.strictEqual(got.bar, 'x')
+        done()
+      })
+    })
+
+    it('should return a promise which keeps on a non-promise value returned from onfulfilled', function(done){
+      var p2 = await('foo').keep('foo','x')
+      .then(function(got){
+        assert.strictEqual(got.foo, 'x')
+        return 'foo'
+      })
+      p2.then(function(got){
+        assert.strictEqual(got.value, 'foo')
+        done()
+      })
+    })
+
+    it('should return a promise which assumes the eventual state of a promise returned from onrejected', function(done){
+      var p2 = await('foo').fail('x')
+      .then(null,function(err){
+        return await('bar').keep('bar','x')
+      })
+      p2.then(function(got){
+        assert.strictEqual(got.bar, 'x')
+        done()
+      })
+    })
+
+    it('should return a promise which keeps on a non-promise value returned from onrejected', function(done){
+      var p2 = await('foo').fail('x')
+      .then(null,function(err){
+        return 'x'
+      })
+      p2.then(function(got){
+        assert.strictEqual(got.value, 'x')
+        done()
+      })
+    })
+
+    it('should reject the returned promise if onfulfilled throws an exception', function(done){
+      var err1 = new Error()
+      await('foo').keep('foo')
+      .then(function(){
+        throw err1
+      })
+      .then(null, function(err2){
+        assert.strictEqual(err1, err2)
+        done()
+      })
+    })
+
+    it('should reject the returned promise if onrejected throws an exception', function(done){
+      var err1 = new Error()
+      await('foo').fail()
+      .then(null, function(){
+        throw err1
+      })
+      .then(null, function(err2){
+        assert.strictEqual(err1, err2)
+        done()
+      })
+    })
+
+    it('should fulfill the returned promise based on current promise if onfulfilled is not provided', function(done){
+      await('foo').keep('foo','x')
+      .then()
+      .then(function(got){
+        assert.strictEqual(got.foo, 'x')
+        done()
+      })
+    })
+
+    it('should reject the returned promise based on current promise if onrejected is not provided', function(done){
+      var err1 = new Error();
+      await('foo').fail(err1)
+      .then()
+      .then(null, function(err2){
+        assert.strictEqual(err1, err2)
+        done()
+      })
+    })
+
+    it('should have a convenience method called catch', function(done){
+      var err1 = new Error();
+      await('foo').fail(err1)
+      .then(function(){
+        return 7;
+      })
+      .then(function(){
+        return 'x';
+      })
+      .catch(function(err2){
+        assert.strictEqual(err1, err2)
+        done()
+      })
     })
   })
 })

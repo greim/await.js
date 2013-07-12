@@ -1,28 +1,39 @@
 # await.js
 
-await.js re-thinks promises in terms of set theory. You await() a set of outcomes, and your promise is kept once all those outcomes are realized.
+await.js is a dependency-free, [Promises/A+](http://promisesaplus.com/)-conforming library designed to make parallel async operations easy by thinking in terms of *sets*. You await() a set of things, and once you have all the things, you do stuff.
 
-## Examples
+## Example
 
 ```javascript
-// i need a user and a twitter feed
-var prom = await('user','latest-tweets');
+// await a set of things
+var getStuff = await('me','feed','ready')
 
-// provider code
-$.ajax('/api/user', {
-  success: function(data){ prom.keep('user', data) },
-  error: function(err) { prom.fail(err) }
-});
-$.ajax('/api/feed', {
-  success: function(data){ prom.keep('latest-tweets', data) },
-  error: function(err) { prom.fail(err) }
+// do stuff with the things
+getStuff.then(function(got){
+  // now you got stuff
+  got.me // json object
+  got.feed // json object
+  got.ready // null; dom has loaded
+},function(err){
+  // oops, there was an error
 });
 
-// outcome code
-prom.onkeep(function(got){
-  got.feed; // i got the feed
-  got.user; // i got the user
-});
+// fulfill 'user'
+$.ajax('/api/users/me', {
+  success: function(data){ getStuff.keep('me', data) },
+  error: function(err) { getStuff.fail(err) }
+})
+
+// fulfill 'feed'
+$.ajax('/api/users/me/feed', {
+  success: function(data){ getStuff.keep('feed', data) },
+  error: function(err) { getStuff.fail(err) }
+})
+
+// fulfill 'ready'
+$(document).ready(function(){
+  getStuff.keep('ready');
+})
 ```
 
 ## Installation and use
@@ -59,88 +70,74 @@ You'll need some polyfill or Modernizr goodness to use it in browsers that don't
 
 ## How does it work?
 
-await.js promises are like mad libs. In fact, here's a mad lib implemented using an await.js promise.
+An await promise starts out as a set of empty slots that need to be filled. As soon as each individual slot has been fulfilled, the promise enters the *kept* state. It doesn't matter how long or in what order the slots are filled, or whether they're fulfilled serially or in parallel. If something goes wrong during fulfillment, the promise enters the *failed* state. The promise cannot enter the failed state if it has already entered the kept state or vice versa. Once in either a kept or failed state, a promise will never switch to any other state.
+
+## Creating promises
+
+You create a promise by calling the `await()` function, and passing a series of strings; one for each slot you expect to be fulfilled.
 
 ```javascript
-// promise ourselves two nouns and an adjective
-var prom = await('noun1', 'noun2', 'adjective')
+var prom = await('foo','bar','baz')
+```
 
-// it doesn't matter when, how or in what
-// order you keep each item of the promise,
-// as long as they're all eventually kept
-prom.keep('noun1', 'horse')
-prom.keep('noun2', 'apple')
-prom.keep('adjective', 'happy')
+## Consuming promises
 
-prom.onkeep(function(got){
-  // now, we 'got' all the things we need!
-  console.log(
-  	"The %s eats the %s and is %s.",
-  	got.noun1,
-  	got.noun2,
-  	got.adjective
-  )
-  // "The horse eats the apple and is happy."
+There are two ways to do this, the event handlers or the `then()` method.
+
+### The event handlers
+
+An await promise has `onkeep()`, `onresolve()` and `onfail()` methods that accept callbacks. If a promise is in an unresolved state, callbacks are stored for later execution. Once it enters either a kept or a failed state, all relevant callbacks are executed in the order they were added, and references to callback functions are no longer stored from that point onward. These methods can be called any number of times, in any order. If called after the promise has entered the kept or failed state, relevant callbacks are executed immediately and then discarded. Callbacks are always executed after the method returns. Because of these factors, code is effectively decoupled from the state of the promise. For example, a promise instance can be retained and used repeatedly to access the same information over and over.
+
+```javascript
+promise.onkeep(function(got){
+  got.slotA
+  got.slotB
+  //...
+})
+
+promise.onfail(function(err){
+  // handle error case
+})
+
+promise.onresolve(function(){
+  // promise is now either in
+  // a kept or failed state
 })
 ```
 
-## Concept
+### The `then()` method
 
-The existence of nested callbacks is a common criticism of JavaScript's asynchronous capabilities. However the mixture of concerns between provisioning code and outcome code is sometimes the real culprit. Nested callbacks are often a perfectly appropriate representation of asynchronous control flow, once the "what to do once I'm done" code is removed from the equation. Await's goal is to keep these concerns separate and break code into distinct areas of concern:
-
-### Declaration
+The `then()` method conforms to the signature and behavioral conventions outlined in the [Promises/A+ spec](http://promisesaplus.com/). Unlike the event handlers above, which are purely consumer methods, `then()` is both consumer and provider. That is, it returns a *new* promise based on the value returned by its callback.
 
 ```javascript
-var prom = await('user', 'feed')
-```
-
-### Provisioning
-
-```javascript
-$.ajax('/api/current_user', {
-  success: function(data){ prom.keep('user', data) },
-  error: function(xhr){ prom.fail(new Error('error ' + xhr.status)) }
-})
-$.ajax('/api/feed', {
-  success: function(data){ prom.keep('feed', data) }
-  error: function(xhr){ prom.fail(new Error('error ' + xhr.status)) }
-})
-setTimeout(function(){
-  prom.fail(new Error('10 second timeout'))
-},10000)
-```
-
-### Outcome
-    
-```javascript
-prom.onkeep(function(got){
-  alert('success!')
-  alert(got.user)
-  alert(got.feed)
+promise.then(function(got){
+  got.slotA // etc, same as above
+  // the value returned here fulfills
+  // the promise returned by then()
+}, function(err){
+  // handle error case
+  // the value returned here fulfills
+  // the promise returned by then()
+  // same as above
 })
 ```
 
-### Error handling
-    
-```javascript
-prom.onfail(function(err){
-  alert(err.message)
-})
-```
+Others have written good explanations on how to use "thenables", as they have come to be called:
 
-The `run()` method, combined with await's chaining, allows structuring code thusly:
+ * http://blog.parse.com/2013/01/29/whats-so-great-about-javascript-promises/
+ * https://gist.github.com/domenic/3889970
+ * http://howtonode.org/promises
+ * http://promisesaplus.com/
 
-```javascript
-await('user', 'feed')
-.run(function(prom){ ...provider code... })
-.onkeep(function(got){ ...consumer code... })
-.onfail(function(reason){ ...error handling code... })
-.onresolve(function(){ ...in-any-case code... })
-```
+## Keeping promises (or failing)
 
-# Basic usage
+### `promise.keep(name, [value])`
 
-For every string you pass to the `await()` function, that's one piece of the promise that you need to `keep()` before the whole promise keeps. Meanwhile, you can call `onkeep()` over and over to gain access to those bits of data as many times as you want. While the promise is unkept, your `onkeep()` callbacks are simply queued up for later execution.
+Each slot of a promise is fulfilled using its `keep()` method. `keep()` must be called once for each slot. Only the first call to `keep()` for a given slot has any effect on the state of the promise. Subsequent calls are ignored. If no `value` is given, it defaults to `null`.
+
+### `promise.fail(error)`
+
+At any time, you can call `fail()` on a promise, passing the error object representing the failure. If the promise is already in a kept or failed state, calls to `fail()` are ignored, and have no effect on the state of the promise. If none or only some slots have been filled, `fail()` will permanently push the promise into the failed state.
 
 ## Grouping promises
 
@@ -191,25 +188,27 @@ var proms = collection.map(function(model){
 ...
 
 await.all(proms)
-.onkeep(function(){
-  // all fetches were completed
+.onkeep(function(got){
+  got.all[0]
+  got.all[1]
+  //...
 })
 ```
 
 ## Chaining promises
 
-Promises can be explicitly chained instead of grouped. Here we've declared two promises, and we want to suck the output from one to the other:
+Promises can be explicitly chained instead of grouped. Here we've declared two promises, and we want to take the output from one and plug it into the other:
 
 ```
 p1 = await('foo', 'bar', 'baz')
 p2 = await('foo', 'bar', 'buz', 'qux')
 
-p2      p1 
+p1      p2 
 ===========
 foo     foo
 bar     bar
-buz     baz
-qux        
+baz     buz
+        qux
 ```
 
 What happens is that p1 can *take* p2.
@@ -221,12 +220,12 @@ p1.take(p2)
 p1 now takes p2, and if p2 fails, p1 fails. As you can see, p2 is a different set of things than p1. How does p2 map to p1?
 
 ```
-p2      p1 
+p1      p2 
 ===========
-foo --> foo
-bar --> bar
-buz     baz
-qux        
+foo <-- foo
+bar <-- bar
+baz     buz
+        qux
 ```
 
 In other words, p1 only took the *intersection* of itself with p2. Thus when p2 keeps, p1 remains unkept. You can therefore optionally provide a mapping object:
@@ -234,12 +233,12 @@ In other words, p1 only took the *intersection* of itself with p2. Thus when p2 
 ```
 p1.take(p2, {'buz':'baz'})
 
-p2      p1 
+p1      p2 
 ===========  *p1 can now fire its keep event*
-foo --> foo
-bar --> bar
-buz --> baz
-qux        
+foo <-- foo
+bar <-- bar
+baz <-- buz
+        qux
 ```
 
 If the mapping you provide conflicts with direct matches, the mapping wins:
@@ -252,84 +251,37 @@ p1.take(p2, {
 ```
 
 ```
-p2      p1 
+p1      p2 
 ===========
-foo --> foo
-qux --> bar
-buz --> baz
-bar        
+foo <-- foo
+bar <-- qux
+baz <-- buz
+        bar
 ```
 
-## Aggregating an unknown-length list of promises
-
-When you have a list of things to do of arbitrary length, you can use `await.all(array)` to return a promise over all of those items.
+You can also *take* non-await thenables, such as a Q promise or a jqXHR object. If so, you must name the value:
 
 ```javascript
-var proms = urls.map(function(url){
-  return await('data')
-  .run(function(prom){
-    $.ajax(url, {
-      success: function(data){ prom.keep('fetch', data) },
-      error: function(xhr){ prom.fail(new Error('request error')) }
-    })
-  })
-})
+await('feed').take($.ajax('/api/feed'), 'feed')
+```
 
-await.all(proms)
-.onkeep(function(got){
-  // alert the data from the fourth url
-  alert(got.all[3].data)
+This is easier than doing:
+
+```javascript
+var prom = await('feed')
+$.ajax('/api/feed', {
+  success: function(data){ prom.keep('feed', data) },
+  error: function(err){ prom.fail(err) }
 })
 ```
 
-## Error handling
+## Using `nodify()` in Node.js
 
-Error handling is accomplished via the `fail()` and `onfail()` methods. The error message passed to `fail()` is what the `onfail()` callback receives. Any subsequent arguments passed to `fail()` are also applied to the `onfail()` callback, which is useful for debugging, etc.
-
-```javascript
-await('thing')
-.fail('oops!', 1, 2, 3)
-.onfail(function(){
-  alert([].slice.call(arguments).join(','))
-  // "oops!,1,2,3"
-})
-```
-
-## Not everything needs a value
-
-Sometimes you might only want to await something to *happen*, without necessarily needing a value back from it. In that case, just leave off the second parameter to `keep()` and it will default to null:
+Node.js uses a convention where callback signatures have an error object in the first position. If the operation was successful, this argument is null, otherwise it's an instance of Error. Every node callback you write therefore needs an if/else statement in order to see if this argument is not empty, which can get tedious. To hook up an await promise to a node callback for example, you'd do this:
 
 ```javascript
-await('domReady', 'feed')
-.run(function(prom){
-  $(document).ready(function(){
-    prom.keep('domReady') // left off second param
-  })
-  fetchFeed(function(feed){
-    prom.keep('feed', feed)
-  })
-})
-.onkeep(function(got){
-  // got.feed contains data
-  // got.domReady === null
-})
-```
+var promise = await('logData')
 
-## Library pattern
-
-The await.js library pattern is as follows:
-
-```javascript
-return await(...).run(...)
-```
-
-Examples are provided in the `examples` subfolder of the repo, including one for Backbone models and another for jQuery ajax.
-
-## Using `nodify()` in Node JS 
-
-Node.js uses a convention where callback signatures have an error object in the first position. If the operation was successful, this argument is null. Every node callback you write therefore needs an if/else statement, which can get tedious. To hook up an await promise to a node callback for example, you'd do this:
-
-```javascript
 fs.readFile('/tmp/log', function(err, data){
   if (err) {
     promise.fail(err);
@@ -339,15 +291,17 @@ fs.readFile('/tmp/log', function(err, data){
 });
 ```
 
-To avoid this, when you have an await promise riding on the outcome of a node callback, you can wrap the callback in `promise.nodify()`, and it will wire up the error handling for you, shifting the `err` param off the signature automatically:
+As a convenience, you can wrap the callback in `promise.nodify()`, and it will wire up the error handling for you, shifting `err` off the signature for you:
 
 ```javascript
+var promise = await('logData')
+
 fs.readFile('/tmp/log', promise.nodify(function(data){
   promise.keep('logData', data);
 }));
 ```
 
-To save even more typing, if you simply want to keep the promise based on the success value, then you can pass a string to `nodify()` instead of a function. This example below behaves equivalent to the above:
+To save even more typing, if you simply want to keep the promise based on the success value, you can pass a string to `nodify()` instead of a function. This example below behaves equivalent to the above:
 
 ```javascript
 fs.readFile('/tmp/log', promise.nodify('logData'));
@@ -388,7 +342,7 @@ nodeApi.doSomething(promise.nodify(null, 'foo'))
   <tbody>
     <tr>
       <td style="white-space: nowrap;font-family: monospace;font-size:90%;">var promise =<br>await(item1, item2, ... itemN)</td>
-      <td><strong>Factory function</strong>. Returns a promise, with the idea that you want to <em>await</em> the fulfillment of this set of things before you consider the promise kept. The <code>new</code> keyword is disallowed, since this is a factory, not a constructor. Accepts zero or more args which can be strings or other promises, which allows grouping. Order of arguments is unimportant.</td>
+      <td>Returns a promise, pending the fulfillment of the given set of things. The <code>new</code> keyword is not needed. Accepts one or more args which can be strings or other promises, which allows grouping. Order of arguments is unimportant.</td>
       <td>promise</td>
     </tr>
     <tr>
@@ -410,6 +364,16 @@ nodeApi.doSomething(promise.nodify(null, 'foo'))
       <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.onresolve(callback[, context])</td>
       <td>Calls <code>callback</code> when promise either keeps or fails. If promise has already been kept or failed, <code>callback</code> runs immediately. If defined and not null, <code>context</code> will be <code>this</code> in <code>callback</code>.</td>
       <td>itself</td>
+    </tr>
+    <tr>
+      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.then(onkeep, onfail)</td>
+      <td>Conforms to the signature and behavioral conventions outlined in the Promises/A+ spec.</td>
+      <td>A new await.js promise</td>
+    </tr>
+    <tr>
+      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.catch(onfail)</td>
+      <td>Convenience method that behaves equivalent to <code>promise.then(null, onfail)</code>.</td>
+      <td>A new await.js promise</td>
     </tr>
     <tr>
       <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.keep(item[, data])</td>
@@ -448,82 +412,3 @@ nodeApi.doSomething(promise.nodify(null, 'foo'))
     </tr>
   </tbody>
 </table>
-
-## Details and incidentalities
-
-For convenience, all methods that take callbacks also take a second context arg.
-
-```javascript
-await().onkeep(function(){
-  // this this is now that this
-}, this)
-```
-
-Empty promises are legal and keep immediately.
-
-```javascript
-await().onkeep(function(got){
-  alert(JSON.stringify(got));
-  // '{}'
-})
-```
-
-Once a promise is either kept or failed, subsequent calls to `keep()` or `fail()` are silently ignored.
-
-```javascript
-await('greeting')
-.keep('greeting', 'hi')
-.keep('greeting', 'hello')
-.fail('no greeting for you')
-.onkeep(function(got){
-  alert(got.greeting);
-  // 'hi'
-})
-```
-
-`await()` arguments are coerced to strings.
-
-```javascript
-await({}) // {} is converted to string, but it's legal
-          // you'd just have to say promise.keep("[object Object]")!
-```
-
-There's nothing magical about `promise.run()`. It just runs the given function, passing itself to the callback, and returning itself for chainability.
-
-```javascript
-var refB
-var refA = await().run(function(promise){
-  refB = promise
-})
-alert(refA === refB)
-// "true"
-```
-
-`promise.run()` just avoids depositing a variable in scope, provides a handy closure, and keeps things grouped nicely.
-
-```javascript
-// these are the same
-
-var promise = await('greeting');
-promise.keep('greeting', 'hi');
-return promise;
-
-return await('greeting')
-.run(function(promise){
-  promise.keep('greeting', 'hi');
-})
-```
-
-`promise.onkeep()`, `promise.onresolve()`, and `promise.onfail()` can be called at any time, an arbitrary number of times. They're executed in the order added.
-
-```javascript
-await()
-.onfail(function(){ alert('fail1') })
-.onkeep(function(){ alert('keep1') })
-.onresolve(function(){ alert('resolve') })
-.onkeep(function(){ alert('keep2') })
-.onfail(function(){ alert('fail2') })
-
-// in case of fail, alerts 'fail1' > 'resolve' > 'fail2'
-// in case of keep, alerts 'keep1' > 'resolve' > 'keep2'
-```

@@ -2,7 +2,7 @@
 // PROLOGUE - LICENSE
 
 /*
-Copyright (c) 2012 by Greg Reimer
+Copyright (c) 2013 by Greg Reimer
 https://github.com/greim
 http://obadger.com/
 
@@ -40,6 +40,11 @@ SOFTWARE.
     // CHAPTER 1 - VARIABLE DECLARATION
 
     var ARGS = slice.call(arguments);
+
+    /*
+    Boolean to track if the state has been built. State can only be built once.
+    */
+    var BUILT = false;
 
     /*
     Using convention of uppercase names for vars scoped to _await()
@@ -102,18 +107,22 @@ SOFTWARE.
       */
 
       if (SUCCESS || FAILURE) {
-        if (event === 'resolve') {
-          cb.call(ctx);
-        }
-        if (SUCCESS) {
-          if (event === 'keep') {
-            cb.call(ctx, GOT);
+        // timeout guarantees cb gets
+        // executed after return
+        setTimeout(function(){        
+          if (event === 'resolve') {
+            cb.call(ctx);
           }
-        } else {
-          if (event === 'fail') {
-            cb.apply(ctx, FAILURE);
+          if (SUCCESS) {
+            if (event === 'keep') {
+              cb.call(ctx, GOT);
+            }
+          } else {
+            if (event === 'fail') {
+              cb.apply(ctx, FAILURE);
+            }
           }
-        }
+        },0);
       } else {
         ALLBACKS.push({
           callback:cb,
@@ -229,32 +238,40 @@ SOFTWARE.
 
     PROMISE.take = function(p2, map){
       if (SUCCESS || FAILURE) {
-        return PROMISE;
-      }
-      p2.onfail(PROMISE.fail);
-      p2.onkeep(function(got){
-        var taken = {}, gotItems = Object.keys(got);
+        // do nothing
+      } else if (p2 instanceof Promise) {
+        p2.onfail(PROMISE.fail);
+        p2.onkeep(function(got){
+          var taken = {}, gotItems = Object.keys(got);
 
-        // take any direct matches first
-        gotItems.forEach(function(item){
-          if (SLOTS.hasOwnProperty(item)) {
-            taken[item] = got[item];
-          }
-        });
-
-        // take matches via mapping, overwrites any direct matches
-        if (map) {
+          // take any direct matches first
           gotItems.forEach(function(item){
-            if (map.hasOwnProperty(item) && SLOTS.hasOwnProperty(map[item])){
-              taken[map[item]] = got[item];
+            if (SLOTS.hasOwnProperty(item)) {
+              taken[item] = got[item];
             }
           });
-        }
 
-        Object.keys(taken).forEach(function(item){
-          PROMISE.keep(item, taken[item]);
+          // take matches via mapping, overwrites any direct matches
+          if (map) {
+            gotItems.forEach(function(item){
+              if (map.hasOwnProperty(item) && SLOTS.hasOwnProperty(map[item])){
+                taken[map[item]] = got[item];
+              }
+            });
+          }
+
+          Object.keys(taken).forEach(function(item){
+            PROMISE.keep(item, taken[item]);
+          });
         });
-      });
+      } else if (p2 && typeof p2.then === 'function' && typeof map === 'string') {
+        var name = map;
+        p2.then(function(val){
+          PROMISE.keep(name, val);
+        },function(err){
+          PROMISE.fail(err);
+        });
+      }
       return PROMISE;
     };
     PROMISE.things = function(){
@@ -278,56 +295,136 @@ SOFTWARE.
     };
 
     // ########################################################################
-    // CHAPTER 7 - INITIALIZE
+    // CHAPTER 7 - PROMISES/A+
 
-    /*
-    Optionally take other promises.
-    */
-    ARGS.forEach(function(arg){
-      if (arg instanceof Promise) {
-        arg.things().forEach(function(item){
-          SLOTS[item] = false;
-        });
+    function fulfillWithResult(thenProm, returned) {
+      if (returned && returned.constructor === Promise) {
+        thenProm.buildState(returned);
       } else {
-        SLOTS[arg] = false;
+        var valueProm = _await('value').run(function(prom){
+          if (returned && typeof returned.then === 'function') {
+            returned.then(function(val) {
+              prom.keep('value', val);
+            },function(reason) {
+              prom.fail(reason);
+            });
+          } else {
+            // returned is some value other than a promise
+            prom.keep('value', returned);
+          }
+        });
+        thenProm.buildState(valueProm);
       }
-    });
-
-    /*
-    Having built all slots, take grouped promises.
-    */
-    ARGS.forEach(function(arg){
-      if (arg instanceof Promise) {
-        PROMISE.take(arg);
-      }
-    });
-
-    if (Object.keys(SLOTS).length === 0) {
-      SUCCESS = true;
     }
+
+    PROMISE.then = function(onFulfilled, onRejected) {
+
+      if (typeof onFulfilled !== 'function') {
+        onFulfilled = function(){ return this; };
+      }
+      if (typeof onRejected !== 'function') {
+        onRejected = function(err){ throw err; };
+      }
+
+      var thisProm = this;
+
+      // empty promise so it can build state from a future promise
+      return _await().run(function(thenProm) {
+        thisProm
+        .onkeep(function(got) {
+          try {
+            var returnedValue = onFulfilled.call(thisProm, got);
+            fulfillWithResult(thenProm, returnedValue);
+          } catch(ex) {
+            thenProm.fail(ex);
+          }
+        })
+        .onfail(function(reason) {
+          try {
+            var returnedValue = onRejected.call(thisProm, reason);
+            fulfillWithResult(thenProm, returnedValue);
+          } catch(ex) {
+            thenProm.fail(ex);
+          }
+        });
+      });
+    };
+
+    PROMISE.catch = function(onRejected){
+      return PROMISE.then(null, onRejected);
+    }
+
+    // ########################################################################
+    // CHAPTER 8 - BUILD STATE
+
+    PROMISE.buildState = function() {
+
+      var items = slice.call(arguments);
+
+      /*
+      Check if already built.
+      */
+      if (BUILT) {
+        throw new Error('cannot build state twice');
+      } else {
+        BUILT = items.length > 0;
+      }
+
+      /*
+      Populate slots.
+      */
+      items.forEach(function(item) {
+        if (item instanceof Promise) {
+          item.things().forEach(function(item) {
+            SLOTS[item] = false;
+          });
+        } else {
+          SLOTS[item] = false;
+        }
+      });
+
+      /*
+      Having populated slots, take promises.
+      */
+      items.forEach(function(item) {
+        if (item instanceof Promise) {
+          PROMISE.take(item);
+        }
+      });
+
+      return PROMISE;
+    };
+
+    // ########################################################################
+    // CHAPTER 9 - INIT AND RETURN
+
+    PROMISE.buildState.apply(PROMISE, ARGS);
 
     return PROMISE;
   };
 
   // ########################################################################
-  // CHAPTER 8 - AWAITING LISTS
+  // CHAPTER 10 - AWAITING LISTS
 
   _await.all = function(list) {
+    if (!list || list.length === 0) {
+      return _await('all').keep('all',[]);
+    }
     var gots = [];
-    var newList = list.map(function(prom, idx){
+    var promiseList = list.map(function(prom, idx){
       var key = 'p'+idx;
       return _await(key)
-      .run(function(p){
+      .run(function(idxProm){
         prom.onkeep(function(got){
           gots[idx] = got;
-          p.keep(key);
+          idxProm.keep(key);
         });
-        prom.onfail(p.fail);
+        prom.onfail(idxProm.fail);
       });
     });
     return _await('all')
     .run(function(prom){
-      _await.apply(this, newList)
+      _await.apply(this, promiseList)
       .onfail(prom.fail)
       .onkeep(function(){
         prom.keep('all', gots);

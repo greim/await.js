@@ -537,6 +537,32 @@ describe('await', function(){
       })
       setTimeout(done,1)
     })
+
+    it('should be fast', function(){
+
+      // Obviously this is subjective. This is just a way
+      // to alert me if it starts to run slower. The
+      // threshold was determined by finding a speed at
+      // which it failed ~half the time, then doubling it.
+      // If it fails illegitimately, just bump up the
+      // threshold or get rid of this test.
+
+      var threshold = 1600
+      var startTime = new Date().getTime()
+      for (var i=0; i<100000; i++){
+        await('foo','bar','baz')
+        .run(function(){})
+        .onkeep(function(){})
+        .onfail(function(){})
+        .onresolve(function(){})
+        .keep('foo')
+        .keep('bar')
+        .keep('baz')
+      }
+      var endTime = new Date().getTime()
+      var duration = endTime - startTime
+      assert.ok(duration < threshold)
+    })
   })
 
   // ###########################################################

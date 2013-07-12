@@ -163,8 +163,6 @@ p1 = await('foo', 'bar')
 p2 = await('baz')
 p3 = await(p1, p2, 'qux')
 
-...
-
 p3.onkeep(function(got){
   // do something with got.foo
   // do something with got.bar
@@ -182,8 +180,6 @@ p3 = await(
   p1.map({'model':'m1'}),
   p2.map({'model':'m2'})
 )
-
-...
 
 p3.onkeep(function(got){
   // do something with got.m1

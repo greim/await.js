@@ -86,7 +86,7 @@ There are two ways to do this, the event handlers or the `then()` method.
 
 ### The event handlers
 
-An await promise has `onkeep()`, `onresolve()` and `onfail()` methods that accept callbacks. If a promise is in an unresolved state, callbacks are stored for later execution. Once it enters either a kept or a failed state, all relevant callbacks are executed in the order they were added, and references to callback functions are no longer stored from that point onward. These methods can be called any number of times, in any order. If called after the promise has entered the kept or failed state, relevant callbacks are executed immediately and then discarded. Callbacks are always executed after the method returns. Because of these factors, code is effectively decoupled from the state of the promise. For example, a promise instance can be retained and used repeatedly to access the same information over and over.
+An await promise has `onkeep()`, `onresolve()` and `onfail()` methods that accept callbacks. If a promise is in an unresolved state, callbacks are stored for later execution. Once it enters either a kept or a failed state, relevant callbacks are executed in the order they were added. These methods can be called any number of times, in any order. If called after the promise has entered the kept or failed state, callbacks are executed immediately. Callbacks are always executed after the method returns. Because of this, code is effectively decoupled from the state of the promise. For example, a promise instance can be retained and used repeatedly to access the same information forever.
 
 ```javascript
 promise.onkeep(function(got){
@@ -135,9 +135,24 @@ Others have written good explanations on how to use "thenables", as they have co
 
 Each slot of a promise is fulfilled using its `keep()` method. `keep()` must be called once for each slot. Only the first call to `keep()` for a given slot has any effect on the state of the promise. Subsequent calls are ignored. If no `value` is given, it defaults to `null`.
 
+```javascript
+var prom = await('number')
+prom.keep('number', 7)
+// prom is now in a kept state
+prom.onkeep(function(got){
+  got.number // 7
+})
+```
+
 ### `promise.fail(error)`
 
 At any time, you can call `fail()` on a promise, passing the error object representing the failure. If the promise is already in a kept or failed state, calls to `fail()` are ignored, and have no effect on the state of the promise. If none or only some slots have been filled, `fail()` will permanently push the promise into the failed state.
+
+```javascript
+var prom = await('foo')
+prom.fail(new Error('Fake error!'))
+// prom is now in a failed state
+```
 
 ## Grouping promises
 

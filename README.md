@@ -5,11 +5,28 @@ await.js is a dependency-free, [Promises/A+](http://promisesaplus.com/)-conformi
 ## Example
 
 ```javascript
-// await a set of things
-var getStuff = await('me','feed','ready')
+// await this set of things
+var getThings = await('me','feed','ready')
+
+// fulfill 'me'
+$.ajax('/api/users/me', {
+  success: function(data){ getThings.keep('me', data) },
+  error: function(err) { getThings.fail(err) }
+})
+
+// fulfill 'feed'
+$.ajax('/api/users/me/feed', {
+  success: function(data){ getThings.keep('feed', data) },
+  error: function(err) { getThings.fail(err) }
+})
+
+// fulfill 'ready'
+$(document).ready(function(){
+  getThings.keep('ready');
+})
 
 // do stuff with the things
-getStuff.then(function(got){
+getThings.then(function(got){
   // now you got stuff
   got.me // json object
   got.feed // json object
@@ -17,23 +34,6 @@ getStuff.then(function(got){
 },function(err){
   // oops, there was an error
 });
-
-// fulfill 'user'
-$.ajax('/api/users/me', {
-  success: function(data){ getStuff.keep('me', data) },
-  error: function(err) { getStuff.fail(err) }
-})
-
-// fulfill 'feed'
-$.ajax('/api/users/me/feed', {
-  success: function(data){ getStuff.keep('feed', data) },
-  error: function(err) { getStuff.fail(err) }
-})
-
-// fulfill 'ready'
-$(document).ready(function(){
-  getStuff.keep('ready');
-})
 ```
 
 ## Installation and use

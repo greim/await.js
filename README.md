@@ -192,15 +192,17 @@ p3.onkeep(function(got){
 If you have an array of promises of arbitrary length, you use `await.all()` to group them together.
 
 ```javascript
-var proms = collection.map(function(model){
-  return model.fetch()
+// 'urls' is an array of strings
+var proms = urls.map(function(url){
+  return await('data').take($.ajax(url), 'data')
 })
 
 await.all(proms)
 .onkeep(function(got){
-  got.all[0]
-  got.all[1]
-  //...
+  for (var i=0; i&lt;got.length; i++) {
+    got[i].data
+  }
+}
 })
 ```
 

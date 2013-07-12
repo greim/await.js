@@ -401,38 +401,6 @@ describe('await', function(){
 
   // ###########################################################
 
-  describe('#things()', function(){
-
-    it('should work for empty promises', function(){
-      var p = await();
-      assert.strictEqual(p.things().length, 0)
-    })
-
-    it('should work for single-item promises', function(){
-      var p = await('foo');
-      assert.strictEqual(p.things().join(), 'foo')
-    })
-
-    it('should work for multi-item promises', function(){
-      var p = await('foo','bar');
-      assert.ok(p.things().indexOf('foo') > -1)
-      assert.ok(p.things().indexOf('bar') > -1)
-      assert.ok(p.things().length === 2)
-    })
-
-    it('should work for grouped promises', function(){
-      var p1 = await('foo')
-      var p2 = await('bar')
-      var p = await(p1,p2,'baz')
-      assert.ok(p.things().indexOf('foo') > -1)
-      assert.ok(p.things().indexOf('bar') > -1)
-      assert.ok(p.things().indexOf('baz') > -1)
-      assert.ok(p.things().length === 3)
-    })
-  })
-
-  // ###########################################################
-
   describe('#map()', function(){
 
     it('should work for single-item promises', function(done){
@@ -513,10 +481,10 @@ describe('await', function(){
 
   // ###########################################################
 
-  describe('#buildState()', function(){
+  describe('#_buildState()', function(){
 
     it('should work', function(done){
-      await().buildState('foo').keep('foo','x')
+      await()._buildState('foo').keep('foo','x')
       .onkeep(function(got){
         assert.strictEqual(got.foo, 'x')
         done()
@@ -525,17 +493,17 @@ describe('await', function(){
 
     it('should be chainable', function(){
       var r1 = await()
-      var r2 = r1.buildState('foo')
+      var r2 = r1._buildState('foo')
       assert.strictEqual(r1,r2)
     })
 
-    it('should allow buildState() on empty promises', function(){
-      await().buildState('foo')
+    it('should allow _buildState() on empty promises', function(){
+      await()._buildState('foo')
     })
 
-    it('should disallow buildState() on non-empty promises', function(){
+    it('should disallow _buildState() on non-empty promises', function(){
       try {
-        await('foo').buildState('foo')
+        await('foo')._buildState('foo')
         assert.ok(false)
       } catch(ex) {}
     })
@@ -999,8 +967,12 @@ describe('await', function(){
       })
       order.push('now')
       setTimeout(function(){
-        assert.strictEqual(order.join(','), 'now,then')
-        done()
+        try {
+          assert.strictEqual(order.join(','), 'now,then')
+          done()
+        } catch(ex) {
+          done(ex)
+        }
       },1)
     })
 
@@ -1018,8 +990,12 @@ describe('await', function(){
       p2.then(null, function(got){ calls++ })
 
       setTimeout(function(){
-        assert.strictEqual(calls, 6)
-        done()
+        try {
+          assert.strictEqual(calls, 6)
+          done()
+        } catch(ex) {
+          done(ex)
+        }
       },1)
     })
 
@@ -1038,8 +1014,12 @@ describe('await', function(){
         p2.then(null, function(got){ order += 'r' })
 
         setTimeout(function(){
-          assert.strictEqual(order, 'yessir')
-          done()
+          try {
+            assert.strictEqual(order, 'yessir')
+            done()
+          } catch(ex) {
+            done(ex)
+          }
         },1)
       })
     })
@@ -1054,8 +1034,12 @@ describe('await', function(){
         return await('bar').keep('bar','x')
       })
       .then(function(got){
-        assert.strictEqual(got.bar, 'x')
-        done()
+        try {
+          assert.strictEqual(got.bar, 'x')
+          done()
+        } catch(ex) {
+          done(ex)
+        }
       })
     })
 
@@ -1066,8 +1050,12 @@ describe('await', function(){
         return 'foo'
       })
       p2.then(function(got){
-        assert.strictEqual(got.value, 'foo')
-        done()
+        try {
+          assert.strictEqual(got.value, 'foo')
+          done()
+        } catch(ex) {
+          done(ex)
+        }
       })
     })
 
@@ -1077,8 +1065,12 @@ describe('await', function(){
         return await('bar').keep('bar','x')
       })
       p2.then(function(got){
-        assert.strictEqual(got.bar, 'x')
-        done()
+        try {
+          assert.strictEqual(got.bar, 'x')
+          done()
+        } catch(ex) {
+          done(ex)
+        }
       })
     })
 
@@ -1088,8 +1080,12 @@ describe('await', function(){
         return 'x'
       })
       p2.then(function(got){
-        assert.strictEqual(got.value, 'x')
-        done()
+        try {
+          assert.strictEqual(got.value, 'x')
+          done()
+        } catch(ex) {
+          done(ex)
+        }
       })
     })
 
@@ -1100,8 +1096,12 @@ describe('await', function(){
         throw err1
       })
       .then(null, function(err2){
-        assert.strictEqual(err1, err2)
-        done()
+        try {
+          assert.strictEqual(err1, err2)
+          done()
+        } catch(ex) {
+          done(ex)
+        }
       })
     })
 
@@ -1112,8 +1112,12 @@ describe('await', function(){
         throw err1
       })
       .then(null, function(err2){
-        assert.strictEqual(err1, err2)
-        done()
+        try {
+          assert.strictEqual(err1, err2)
+          done()
+        } catch(ex) {
+          done(ex)
+        }
       })
     })
 
@@ -1121,8 +1125,12 @@ describe('await', function(){
       await('foo').keep('foo','x')
       .then()
       .then(function(got){
-        assert.strictEqual(got.foo, 'x')
-        done()
+        try {
+          assert.strictEqual(got.foo, 'x')
+          done()
+        } catch(ex) {
+          done(ex)
+        }
       })
     })
 
@@ -1131,8 +1139,12 @@ describe('await', function(){
       await('foo').fail(err1)
       .then()
       .then(null, function(err2){
-        assert.strictEqual(err1, err2)
-        done()
+        try {
+          assert.strictEqual(err1, err2)
+          done()
+        } catch(ex) {
+          done(ex)
+        }
       })
     })
 
@@ -1146,8 +1158,12 @@ describe('await', function(){
         return 'x';
       })
       .catch(function(err2){
-        assert.strictEqual(err1, err2)
-        done()
+        try {
+          assert.strictEqual(err1, err2)
+          done()
+        } catch(ex) {
+          done(ex)
+        }
       })
     })
   })

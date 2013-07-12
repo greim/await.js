@@ -196,8 +196,6 @@ var proms = collection.map(function(model){
   return model.fetch()
 })
 
-...
-
 await.all(proms)
 .onkeep(function(got){
   got.all[0]

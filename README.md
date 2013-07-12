@@ -6,7 +6,7 @@ await.js re-thinks promises in terms of set theory. You await() a set of outcome
 
 ```javascript
 // i need a user and a twitter feed
-var prom = await('user','latest-tweets');
+var prom = await('user','feed');
 
 // provider code
 $.ajax('/api/user', {
@@ -14,7 +14,7 @@ $.ajax('/api/user', {
   error: function(err) { prom.fail(err) }
 });
 $.ajax('/api/feed', {
-  success: function(data){ prom.keep('latest-tweets', data) },
+  success: function(data){ prom.keep('feed', data) },
   error: function(err) { prom.fail(err) }
 });
 

@@ -383,26 +383,19 @@ SOFTWARE.
 
   await.all = function(list) {
     if (!list || list.length === 0) {
-      return await('all').keep('all',[]);
+      return await('length').keep('length',0);
     }
-    var gots = [];
-    var promiseList = list.map(function(prom, idx){
-      var key = 'p'+idx;
-      return await(key)
-      .run(function(idxProm){
-        prom.onkeep(function(got){
-          gots[idx] = got;
-          idxProm.keep(key);
-        });
-        prom.onfail(idxProm.failer());
-      });
+    var keys = list.map(function(prom, idx){
+      return idx;
     });
-    return await('all')
-    .run(function(prom){
-      await.apply(this, promiseList)
-      .onfail(prom.failer())
-      .onkeep(function(){
-        prom.keep('all', gots);
+    keys.push('length');
+    return await.apply(this, keys).run(function(allProm){
+      allProm.keep('length', list.length);
+      list.forEach(function(prom, idx){
+        prom.onfail(allProm.failer());
+        prom.onkeep(function(got){
+          allProm.keep(idx, got);
+        });
       });
     });
   };

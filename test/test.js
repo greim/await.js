@@ -644,7 +644,7 @@ describe('await', function(){
         await('baz').keep('baz')
       ])
       .onkeep(function(got){
-        assert.strictEqual(got.all.length, 3)
+        assert.strictEqual(got.length, 3)
         done()
       })
     })
@@ -677,7 +677,7 @@ describe('await', function(){
       })
     })
 
-    it('should got all with a list of subgots', function(done){
+    it('should got a list of subgots', function(done){
       var proms = [
         await('foo').run(function(p){ setTimeout(function(){ p.keep('foo','a'); }, Math.floor(Math.random() * 33)) }),
         await('foo').run(function(p){ setTimeout(function(){ p.keep('foo','b'); }, Math.floor(Math.random() * 33)) }),
@@ -685,9 +685,9 @@ describe('await', function(){
       ]
       await.all(proms)
       .onkeep(function(got){
-        assert.strictEqual(got.all[0].foo, 'a')
-        assert.strictEqual(got.all[1].foo, 'b')
-        assert.strictEqual(got.all[2].foo, 'c')
+        assert.strictEqual(got[0].foo, 'a')
+        assert.strictEqual(got[1].foo, 'b')
+        assert.strictEqual(got[2].foo, 'c')
         done()
       })
     })

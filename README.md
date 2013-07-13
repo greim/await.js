@@ -74,11 +74,11 @@ You'll need some polyfill or Modernizr goodness to use it in browsers that don't
 
 An await promise represents a set of empty slots that need to be filled.
 A promise can be in one of three states: *unresolved*, *kept* or *failed*.
-Sometimes it's useful to think in terms of it being unresolved or resolved, where resolved means either kept or failed.
+Sometimes it's useful to think in terms of it being *unresolved* or *resolved*, where *resolved* means either *kept* or *failed*.
 
 A promise starts out in an unresolved state.
 As soon as each individual slot has been filled, the promise enters the kept state.
-It doesn't matter how long it takes or in what order the're filled, or whether it's done serially or in parallel.
+It doesn't matter how long it takes or in what order they're filled, or whether it's done serially or in parallel.
 
 If something goes wrong during fulfillment, the promise enters the failed state.
 The promise can't enter the failed state if it has already entered the kept state, or vice versa.
@@ -86,7 +86,7 @@ Once in either a kept or failed state, a promise will never switch to any other 
 
 ## Creating promises
 
-You create a promise by calling the `await()` function, and passing a series of strings; one for each slot you expect to be filled.
+You create a promise by calling the `await()` function and passing a series of strings; one for each slot you expect to be filled.
 
 ```javascript
 var prom = await('foo','bar','baz')
@@ -98,7 +98,7 @@ You use promises in two ways: the event handlers or the `then()` method.
 
 ### The event handlers
 
-An await promise has `onkeep(cb)`, `onresolve(cb)` and `onfail(cb)` methods that accept callbacks.
+An await promise has `onkeep()`, `onresolve()` and `onfail()` methods that accept callbacks.
 These methods can be called any number of times, at any time, in any order.
 
 These methods can be called whether the promise is resolved or unresolved.
@@ -140,9 +140,9 @@ promise.onkeep(function(got){
 
 ### The `then(onkeep, onfail)` method
 
-The `then()` method conforms to the signature and behavioral conventions outlined in the [Promises/A+ spec](http://promisesaplus.com/).
+The `then()` method conforms to the signature and behavioral contract outlined in the [Promises/A+ spec](http://promisesaplus.com/).
 Unlike the event handlers above, which are purely consumer methods, `then()` is both consumer and provider.
-That is, it returns a *new* promise tied to the eventual value returned by its callback.
+That is, it returns a *new* promise pending on the value that will eventually be returned by its callback.
 
 ```javascript
 promise.then(function(got){
@@ -195,11 +195,15 @@ If none or only some slots have been filled, `fail()` will permanently push the 
 var prom = await('foo')
 prom.fail(new Error('Fake error!'))
 // prom is now in a failed state
+prom.onfail(function(err){
+  err.message // 'Fake error!'
+})
 ```
 
 ## Grouping promises
 
-`await()` accepts other promises in addition to strings. In such cases, the newly-created promise is the *union* of all grouped promises and string arguments.
+`await()` accepts other promises in addition to strings.
+In such cases, the newly-created promise is the *union* of all grouped promises and string arguments.
 
 ```javascript
 p1 = await('foo', 'bar')
@@ -214,7 +218,7 @@ p3.onkeep(function(got){
 })
 ```
 
-`map()` returns a new promise with differently-named slots, and can be used to step around name collisions.
+`promise.map()` returns a new promise with differently-named slots, and can be used to step around name collisions.
 
 ```javascript
 p1 = await('model')
@@ -237,6 +241,7 @@ If you have an array of promises of arbitrary length, you can use `await.all()` 
 ```javascript
 // 'urls' is an array of strings
 var proms = urls.map(function(url){
+  // see documentation for take() below
   return await('data').take($.ajax(url), 'data')
 })
 
@@ -245,14 +250,13 @@ await.all(proms)
   for (var i=0; i&lt;got.length; i++) {
     got[i].data
   }
-}
 })
 ```
 
-## Chaining promises
+## `take(promise, [mapping])` AKA chaining promises
 
 Promises can be explicitly chained instead of grouped.
-Here we've declared two promises, and we want to take the output from one and plug it into the other:
+Here we've declared two promises, and we want to take the outcome of one and plug it into the other:
 
 ```
 p1 = await('foo', 'bar', 'baz')
@@ -274,7 +278,7 @@ p1.take(p2)
 
 p1 now takes p2, and if p2 fails, p1 fails.
 As you can see, p2 is a different set of things than p1.
-How does p2 map to p1?
+Here is how p2 maps to p1:
 
 ```
 p1      p2 
@@ -293,7 +297,7 @@ You can therefore optionally provide a mapping object:
 p1.take(p2, {'buz':'baz'})
 
 p1      p2 
-===========  *p1 can now fire its keep event*
+===========
 foo <-- foo
 bar <-- bar
 baz <-- buz
@@ -318,8 +322,7 @@ baz <-- buz
         bar
 ```
 
-You can also *take* non-await thenables, such as a Q promise or a jqXHR object.
-If so, you must name the value:
+You can also take non-await thenables, such as a Q promise or a jqXHR object, provided that you name the value:
 
 ```javascript
 await('feed').take($.ajax('/api/feed'), 'feed')
@@ -337,10 +340,10 @@ $.ajax('/api/feed', {
 
 ## Using `nodify()` in Node.js
 
-Node.js uses a convention where callback signatures have an error object in the first position.
+Node.js callbacks have an error object in the first position.
 If the operation was successful, this argument is null, otherwise it's an instance of Error.
 Every node callback you write therefore needs an if/else statement in order to see if this argument is not empty, which can get tedious.
-To hook up an await promise to a node callback for example, you'd do this:
+For example, to hook up an await promise to a node callback, you'd need to do this:
 
 ```javascript
 var promise = await('logData')
@@ -354,7 +357,7 @@ fs.readFile('/tmp/log', function(err, data){
 });
 ```
 
-As a convenience, you can wrap the callback in `promise.nodify()`, and it will wire up the error handling for you, shifting `err` off the signature for you:
+As a convenience, you can wrap the callback in `promise.nodify()`, and it will wire up the error handling automatically, shifting `err` off the signature for you:
 
 ```javascript
 var promise = await('logData')
@@ -368,6 +371,8 @@ To save even more typing, if you simply want to keep the promise based on the su
 This example below behaves equivalent to the above:
 
 ```javascript
+var promise = await('logData')
+
 fs.readFile('/tmp/log', promise.nodify('logData'));
 ```
 

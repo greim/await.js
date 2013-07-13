@@ -724,6 +724,182 @@ describe('await', function(){
 
   // ###########################################################
 
+  describe('gotten class', function(){
+
+    it('should have method "forEach"', function(done){
+      var proms = [
+        await('foo').keep('foo', 0),
+        await('foo').keep('foo', 1),
+        await('foo').keep('foo', 2)
+      ]
+      await.all(proms).onkeep(function(gots){
+        try {
+          gots.forEach(function(got, idx){
+            assert.strictEqual(got.foo, idx)
+          })
+          done()
+        } catch(ex) {
+          done(ex)
+        }
+      })
+    })
+
+    it('should have method "map"', function(done){
+      var proms = [
+        await('foo').keep('foo', 0),
+        await('foo').keep('foo', 1),
+        await('foo').keep('foo', 2)
+      ]
+      await.all(proms).onkeep(function(gots){
+        try {
+          var vals = gots.map(function(got){
+            return got.foo
+          }).join(',')
+          assert.strictEqual(vals, '0,1,2')
+          done()
+        } catch(ex) {
+          done(ex)
+        }
+      })
+    })
+
+    it('should have method "some"', function(done){
+      var proms = [
+        await('foo').keep('foo', 0),
+        await('foo').keep('foo', 1),
+        await('foo').keep('foo', 2)
+      ]
+      await.all(proms).onkeep(function(gots){
+        try {
+          var has0 = gots.some(function(got){
+            return got.foo === 0
+          })
+          var has5 = gots.some(function(got){
+            return got.foo === 5
+          })
+          assert.ok(has0)
+          assert.ok(!has5)
+          done()
+        } catch(ex) {
+          done(ex)
+        }
+      })
+    })
+
+    it('should have method "every"', function(done){
+      var proms = [
+        await('foo').keep('foo', 0),
+        await('foo').keep('foo', 1),
+        await('foo').keep('foo', 2)
+      ]
+      await.all(proms).onkeep(function(gots){
+        try {
+          var allNums = gots.every(function(got){
+            return typeof got.foo === 'number'
+          })
+          var noNums = gots.every(function(got){
+            return typeof got.foo !== 'number'
+          })
+          assert.ok(allNums)
+          assert.ok(!noNums)
+          done()
+        } catch(ex) {
+          done(ex)
+        }
+      })
+    })
+
+    it('should have method "reduce"', function(done){
+      var proms = [
+        await('foo').keep('foo', 0),
+        await('foo').keep('foo', 1),
+        await('foo').keep('foo', 2)
+      ]
+      await.all(proms).onkeep(function(gots){
+        try {
+          var sum = gots.reduce(function(tally, got){
+            return tally + got.foo
+          }, 0)
+          assert.strictEqual(sum, 3)
+          done()
+        } catch(ex) {
+          done(ex)
+        }
+      })
+    })
+
+    it('should have method "slice"', function(done){
+      var proms = [
+        await('foo').keep('foo', 0),
+        await('foo').keep('foo', 1),
+        await('foo').keep('foo', 2)
+      ]
+      await.all(proms).onkeep(function(gots){
+        try {
+          var copy = gots.slice()
+          assert.ok(copy !== gots)
+          assert.strictEqual(copy.map(function(got){return got.foo}).join(','), '0,1,2')
+
+          var copy2 = gots.slice(0,2)
+          assert.ok(copy2 !== gots)
+          assert.strictEqual(copy2.map(function(got){return got.foo}).join(','), '0,1')
+          done()
+        } catch(ex) {
+          done(ex)
+        }
+      })
+    })
+
+    it('should have method "join"', function(done){
+      var proms = [
+        await('foo').keep('foo', 0),
+        await('foo').keep('foo', 1),
+        await('foo').keep('foo', 2)
+      ]
+      await.all(proms).onkeep(function(gots){
+        try {
+          var joined = gots.join(',')
+          assert.strictEqual(joined, '[object Object],[object Object],[object Object]')
+          done()
+        } catch(ex) {
+          done(ex)
+        }
+      })
+    })
+
+    it('should have method "keys"', function(done){
+      await('foo','bar').keep('foo').keep('bar')
+      .onkeep(function(got){
+        try {
+          var keys = got.keys()
+          assert.ok(keys.length,2)
+          assert.ok(keys.indexOf('foo') !== -1)
+          assert.ok(keys.indexOf('bar') !== -1)
+          done()
+        } catch(ex) {
+          done(ex)
+        }
+      })
+    })
+
+    it('should have method "values"', function(done){
+      await('foo','bar').keep('foo','a').keep('bar','b')
+      .onkeep(function(got){
+        try {
+          var values = got.values()
+          assert.ok(values.length,2)
+          assert.ok(values.indexOf('a') !== -1)
+          assert.ok(values.indexOf('b') !== -1)
+          done()
+        } catch(ex) {
+          done(ex)
+        }
+      })
+    })
+  })
+
+  // ###########################################################
+
   describe('keep and onkeep', function(){
 
     it('should not support the single-var case, synchronously', function(){

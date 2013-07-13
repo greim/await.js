@@ -30,7 +30,29 @@ SOFTWARE.
   // ------------------------------------------------------------------------
   // CLOSURE SCOPE VARS
 
-  var slice = [].slice;
+  var slice = Array.prototype.slice;
+
+  // ------------------------------------------------------------------------
+  // GOTTEN CLASS
+
+  function Gotten(){}
+  Gotten.prototype = {
+    forEach: Array.prototype.forEach,
+    map: Array.prototype.map,
+    some: Array.prototype.some,
+    every: Array.prototype.every,
+    reduce: Array.prototype.reduce,
+    slice: Array.prototype.slice,
+    join: Array.prototype.join,
+    keys: function(){
+      return Object.keys(this);
+    },
+    values: function(){
+      return Object.keys(this).map(function(name){
+        return this[name];
+      }, this)
+    }
+  };
 
   // ------------------------------------------------------------------------
   // PROMISE CLASS
@@ -38,7 +60,7 @@ SOFTWARE.
   function Promise() {
     this._built = false;
     this._slots = {};
-    this._got = {};
+    this._got = new Gotten();
     this._allbacks = [];
     this._failure = false;
     this._success = false;

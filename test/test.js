@@ -577,11 +577,11 @@ describe('await', function(){
       // threshold was determined by finding a speed at
       // which it failed ~half the time, then doubling it.
       // If it fails illegitimately, just bump up the
-      // threshold or get rid of this test.
+      // threshold or consider removing this test.
 
-      var threshold = 1600
+      var threshold = 186
       var startTime = new Date().getTime()
-      for (var i=0; i<100000; i++){
+      for (var i=0; i<10000; i++){
         await('foo','bar','baz')
         .run(function(){})
         .onkeep(function(){})

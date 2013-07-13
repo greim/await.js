@@ -245,7 +245,7 @@ If you have an array of promises of arbitrary length, you can use `await.all()` 
 await.all(proms)
 .onkeep(function(gots){
 
-  // got is a list with a length
+  // 'gots' is a list with a length
   gots.length // number
   gots[0]
   gots[1] (etc)

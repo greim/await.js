@@ -1,6 +1,8 @@
 # await.js
 
-await.js is a dependency-free, [Promises/A+](http://promisesaplus.com/)-conforming library designed to make parallel async operations easy by thinking in terms of *sets*. You await() a set of things, and once you have all the things, you do stuff.
+await.js is a lightweight, dependency-free promises library that makes both serial and parallel logic easy by thinking in terms of *sets*.
+You await() a set of things, and once you have all the things, you do stuff.
+await.js conforms to the [Promises/A+](http://promisesaplus.com/) spec.
 
 ## Example
 
@@ -70,23 +72,42 @@ You'll need some polyfill or Modernizr goodness to use it in browsers that don't
 
 ## How does it work?
 
-An await promise starts out as a set of empty slots that need to be filled. As soon as each individual slot has been fulfilled, the promise enters the *kept* state. It doesn't matter how long or in what order the slots are filled, or whether they're fulfilled serially or in parallel. If something goes wrong during fulfillment, the promise enters the *failed* state. The promise cannot enter the failed state if it has already entered the kept state or vice versa. Once in either a kept or failed state, a promise will never switch to any other state.
+An await promise represents a set of empty slots that need to be filled.
+A promise can be in one of three states: *unresolved*, *kept* or *failed*.
+Sometimes it's useful to think in terms of it being unresolved or resolved, where resolved means either kept or failed.
+
+A promise starts out in an unresolved state.
+As soon as each individual slot has been filled, the promise enters the kept state.
+It doesn't matter how long it takes or in what order the're filled, or whether it's done serially or in parallel.
+
+If something goes wrong during fulfillment, the promise enters the failed state.
+The promise can't enter the failed state if it has already entered the kept state, or vice versa.
+Once in either a kept or failed state, a promise will never switch to any other state.
 
 ## Creating promises
 
-You create a promise by calling the `await()` function, and passing a series of strings; one for each slot you expect to be fulfilled.
+You create a promise by calling the `await()` function, and passing a series of strings; one for each slot you expect to be filled.
 
 ```javascript
 var prom = await('foo','bar','baz')
 ```
 
-## Consuming promises
+## Using promises
 
-There are two ways to do this, the event handlers or the `then()` method.
+You use promises in two ways: the event handlers or the `then()` method.
 
 ### The event handlers
 
-An await promise has `onkeep()`, `onresolve()` and `onfail()` methods that accept callbacks. If a promise is in an unresolved state, callbacks are stored for later execution. Once it enters either a kept or a failed state, relevant callbacks are executed in the order they were added. These methods can be called any number of times, in any order. If called after the promise has entered the kept or failed state, callbacks are executed immediately. Callbacks are always executed after the method returns. Because of this, code is effectively decoupled from the state of the promise. For example, a promise instance can be retained and used repeatedly to access the same information forever.
+An await promise has `onkeep(cb)`, `onresolve(cb)` and `onfail(cb)` methods that accept callbacks.
+These methods can be called any number of times, at any time, in any order.
+
+These methods can be called whether the promise is resolved or unresolved.
+If called before resolve, callbacks are stored for later execution.
+If called after resolve, callbacks are executed immediately.
+
+An important aspect of promises is that, whether or not a promise is resolved, your callback is always executed *after* the method returns.
+This means that the semantics of your program don't change based on the state of a promise at any given moment.
+That is, your code is effectively decoupled from the state of a promise, and you can always rely on it being an asynchronous operation.
 
 ```javascript
 promise.onkeep(function(got){
@@ -105,9 +126,23 @@ promise.onresolve(function(){
 })
 ```
 
-### The `then()` method
+Since these methods are chainable, the above could also be written as:
 
-The `then()` method conforms to the signature and behavioral conventions outlined in the [Promises/A+ spec](http://promisesaplus.com/). Unlike the event handlers above, which are purely consumer methods, `then()` is both consumer and provider. That is, it returns a *new* promise based on the value returned by its callback.
+```javascript
+promise.onkeep(function(got){
+  //...
+}).onfail(function(err){
+  //...
+}).onresolve(function(){
+  //...
+})
+```
+
+### The `then(onkeep, onfail)` method
+
+The `then()` method conforms to the signature and behavioral conventions outlined in the [Promises/A+ spec](http://promisesaplus.com/).
+Unlike the event handlers above, which are purely consumer methods, `then()` is both consumer and provider.
+That is, it returns a *new* promise tied to the eventual value returned by its callback.
 
 ```javascript
 promise.then(function(got){
@@ -133,20 +168,28 @@ Others have written good explanations on how to use "thenables", as they have co
 
 ### `promise.keep(name, [value])`
 
-Each slot of a promise is fulfilled using its `keep()` method. `keep()` must be called once for each slot. Only the first call to `keep()` for a given slot has any effect on the state of the promise. Subsequent calls are ignored. If no `value` is given, it defaults to `null`.
+Each slot of a promise is fulfilled using the `keep()` method.
+`keep()` must be called once for each slot.
+Only the first call to `keep()` for a given slot has any effect on the state of the promise.
+Subsequent calls are ignored.
+If no `value` is given, it defaults to `null`.
 
 ```javascript
-var prom = await('number')
+var prom = await('number','foo')
 prom.keep('number', 7)
+prom.keep('foo')
 // prom is now in a kept state
 prom.onkeep(function(got){
   got.number // 7
+  got.foo    // null
 })
 ```
 
 ### `promise.fail(error)`
 
-At any time, you can call `fail()` on a promise, passing the error object representing the failure. If the promise is already in a kept or failed state, calls to `fail()` are ignored, and have no effect on the state of the promise. If none or only some slots have been filled, `fail()` will permanently push the promise into the failed state.
+At any time, you can call `fail()` on a promise, passing an error object representing the failure.
+If the promise is already in a kept or failed state, calls to `fail()` are silently ignored, and have no effect on the state of the promise.
+If none or only some slots have been filled, `fail()` will permanently push the promise into the failed state.
 
 ```javascript
 var prom = await('foo')
@@ -171,7 +214,7 @@ p3.onkeep(function(got){
 })
 ```
 
-`map()` returns a chained copy of the promise with updated names, and can be used to step around name collisions.
+`map()` returns a new promise with differently-named slots, and can be used to step around name collisions.
 
 ```javascript
 p1 = await('model')
@@ -187,9 +230,9 @@ p3.onkeep(function(got){
 })
 ```
 
-## Grouping promises by list
+## `await.all(list)`
 
-If you have an array of promises of arbitrary length, you use `await.all()` to group them together.
+If you have an array of promises of arbitrary length, you can use `await.all()` to group them together.
 
 ```javascript
 // 'urls' is an array of strings
@@ -208,7 +251,8 @@ await.all(proms)
 
 ## Chaining promises
 
-Promises can be explicitly chained instead of grouped. Here we've declared two promises, and we want to take the output from one and plug it into the other:
+Promises can be explicitly chained instead of grouped.
+Here we've declared two promises, and we want to take the output from one and plug it into the other:
 
 ```
 p1 = await('foo', 'bar', 'baz')
@@ -228,7 +272,9 @@ What happens is that p1 can *take* p2.
 p1.take(p2)
 ```
 
-p1 now takes p2, and if p2 fails, p1 fails. As you can see, p2 is a different set of things than p1. How does p2 map to p1?
+p1 now takes p2, and if p2 fails, p1 fails.
+As you can see, p2 is a different set of things than p1.
+How does p2 map to p1?
 
 ```
 p1      p2 
@@ -239,7 +285,9 @@ baz     buz
         qux
 ```
 
-In other words, p1 only took the *intersection* of itself with p2. Thus when p2 keeps, p1 remains unkept. You can therefore optionally provide a mapping object:
+In other words, p1 only took the *intersection* of itself with p2.
+Thus when p2 keeps, p1 remains unkept.
+You can therefore optionally provide a mapping object:
 
 ```
 p1.take(p2, {'buz':'baz'})
@@ -270,7 +318,8 @@ baz <-- buz
         bar
 ```
 
-You can also *take* non-await thenables, such as a Q promise or a jqXHR object. If so, you must name the value:
+You can also *take* non-await thenables, such as a Q promise or a jqXHR object.
+If so, you must name the value:
 
 ```javascript
 await('feed').take($.ajax('/api/feed'), 'feed')
@@ -288,7 +337,10 @@ $.ajax('/api/feed', {
 
 ## Using `nodify()` in Node.js
 
-Node.js uses a convention where callback signatures have an error object in the first position. If the operation was successful, this argument is null, otherwise it's an instance of Error. Every node callback you write therefore needs an if/else statement in order to see if this argument is not empty, which can get tedious. To hook up an await promise to a node callback for example, you'd do this:
+Node.js uses a convention where callback signatures have an error object in the first position.
+If the operation was successful, this argument is null, otherwise it's an instance of Error.
+Every node callback you write therefore needs an if/else statement in order to see if this argument is not empty, which can get tedious.
+To hook up an await promise to a node callback for example, you'd do this:
 
 ```javascript
 var promise = await('logData')
@@ -312,7 +364,8 @@ fs.readFile('/tmp/log', promise.nodify(function(data){
 }));
 ```
 
-To save even more typing, if you simply want to keep the promise based on the success value, you can pass a string to `nodify()` instead of a function. This example below behaves equivalent to the above:
+To save even more typing, if you simply want to keep the promise based on the success value, you can pass a string to `nodify()` instead of a function.
+This example below behaves equivalent to the above:
 
 ```javascript
 fs.readFile('/tmp/log', promise.nodify('logData'));
@@ -324,7 +377,8 @@ fs.readFile('/tmp/log', promise.nodify('logData'));
 
 ```javascript
 nodeApi.doSomething(promise.nodify('foo', 'bar'))
-// 'foo' and 'bar' are kept with values a and b, respectively. c is ignored
+// 'foo' and 'bar' are kept with values a and b, respectively.
+c is ignored
 ```
 #### Callback signature: (error)
 

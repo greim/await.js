@@ -236,7 +236,7 @@ p3.onkeep(function(got){
 
 ## `await.all(list)`
 
-If you have an array of promises of arbitrary length, you can use `await.all()` to group them together.
+If you have an array of promises of arbitrary length, you can use `await.all()` to merge them into a single promise.
 
 ```javascript
 // 'proms' is an array of await promises
@@ -244,6 +244,13 @@ If you have an array of promises of arbitrary length, you can use `await.all()` 
 
 await.all(proms)
 .onkeep(function(gots){
+
+  // got is a list with a length
+  gots.length // number
+  gots[0]
+  gots[1] (etc)
+
+  // alternatively...
   gots.forEach(function(got){
     got.foo
     got.bar
@@ -251,6 +258,18 @@ await.all(proms)
   })
 })
 ```
+
+Note that in the above example, `got` is an object, not a true array, despite having `length`, `0`, `1` (etc) properties.
+For example it doesn't have mutator methods like `push()` or `splice()`.
+However for convenience, it does inherit several array-like accessor methods from its prototype:
+
+ * forEach() - Similar to array.forEach()
+ * map() - Similar to array.map()
+ * some() - Similar to array.some()
+ * every() - Similar to array.every()
+ * reduce() - Similar to array.reduce()
+ * slice() - Similar to array.slice()
+ * join() - Similar to array.join()
 
 ## `take(promise, [mapping])`
 

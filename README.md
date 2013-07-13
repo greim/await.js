@@ -259,7 +259,7 @@ await.all(proms)
 })
 ```
 
-Note that in the above example, `got` is an object, not a true array, despite having `length`, `0`, `1` (etc) properties.
+Note that in the above example, `gots` is an object, not a true array, despite having `length`, `0`, `1` (etc) properties.
 For example it doesn't have mutator methods like `push()` or `splice()`.
 However for convenience, it does inherit several array-like accessor methods from its prototype:
 

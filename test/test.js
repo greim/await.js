@@ -176,7 +176,11 @@ describe('await', function(){
 
     it('should only work when supposed to', function(done){
       await('foo').onkeep(function(){
-        assert.ok(false)
+        try {
+          assert.ok(false)
+        } catch(ex) {
+          done(ex)
+        }
       })
       setTimeout(done, 1)
     })
@@ -193,8 +197,16 @@ describe('await', function(){
       await('foo').keep('foo').keep('foo')
     })
 
-    it('should not throw error with unknown keep', function(){
-      await('foo').keep('bar')
+    it('should accept unknown keep', function(done){
+      await('foo').keep('foo').keep('bar','x')
+      .onkeep(function(got){
+        try {
+          assert.strictEqual(got.bar, 'x')
+          done()
+        } catch(ex) {
+          done(ex)
+        }
+      })
     })
   })
 
@@ -1111,7 +1123,7 @@ describe('await', function(){
 
   // ###########################################################
 
-  describe('promises/a+ then', function(){
+  describe('#then()', function(){
 
     it('should exist', function(){
       assert.ok(typeof await().then === 'function')
@@ -1391,6 +1403,26 @@ describe('await', function(){
       .catch(function(err2){
         try {
           assert.strictEqual(err1, err2)
+          done()
+        } catch(ex) {
+          done(ex)
+        }
+      })
+    })
+
+    it('should accumulate over multiple calls to then', function(done){
+      await('foo').keep('foo','foo')
+      .then(function(){
+        return await('bar').keep('bar','bar')
+      })
+      .then(function(){
+        return await('baz').keep('baz','baz')
+      })
+      .then(function(got){
+        try {
+          assert.strictEqual(got.foo, 'foo')
+          assert.strictEqual(got.bar, 'bar')
+          assert.strictEqual(got.baz, 'baz')
           done()
         } catch(ex) {
           done(ex)

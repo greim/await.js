@@ -152,16 +152,17 @@ SOFTWARE.
     Keep part of the promise.
     */
     keep: function(name, data){
+      if (data === undefined) {
+        data = null;
+      }
       if (this._got[name] !== undefined){
         return this;
       }
       if (this._slots[name] === undefined) {
+        this._got[name] = data;
         return this;
       }
       if (!this._failure && !this._success){
-        if (data === undefined) {
-          data = null;
-        }
         this._slots[name] = true;
         this._got[name] = data;
         var kept = Object.keys(this._slots).every(function(item){
@@ -298,7 +299,9 @@ SOFTWARE.
 
     then: (function(){
       // private helper
-      function fulfillWithResult(thenProm, returned) {
+      function defaultFulfilled(){ return this; }
+      function defaultRejected(err){ throw err; }
+      function fulfillWithResult(thenProm, returned, got) {
         if (returned instanceof await) {
           thenProm._buildState(returned);
         } else {
@@ -316,9 +319,16 @@ SOFTWARE.
           });
           thenProm._buildState(valueProm);
         }
+        // accumulate values, as long as the old
+        // values don't clobber the new ones
+        if (got) {
+          got.keys().forEach(function(name){
+            if (!thenProm._slots.hasOwnProperty(name)) {
+              thenProm.keep(name, got[name]);
+            }
+          });
+        }
       }
-      function defaultFulfilled(){ return this; }
-      function defaultRejected(err){ throw err; }
       return function(onFulfilled, onRejected) {
         if (typeof onFulfilled !== 'function') {
           onFulfilled = defaultFulfilled;
@@ -333,7 +343,7 @@ SOFTWARE.
           .onkeep(function(got) {
             try {
               var returnedValue = onFulfilled.call(thisProm, got);
-              fulfillWithResult(thenProm, returnedValue);
+              fulfillWithResult(thenProm, returnedValue, got);
             } catch(ex) {
               thenProm.fail(ex);
             }

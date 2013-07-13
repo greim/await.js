@@ -252,7 +252,9 @@ await.all(proms)
 })
 ```
 
-## `take(promise, [mapping])` AKA chaining promises
+## `take(promise, [mapping])`
+
+(AKA chaining promises)
 
 Promises can be explicitly chained instead of grouped.
 Here we've declared two promises, and we want to take the outcome of one and plug it into the other:

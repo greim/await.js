@@ -164,6 +164,61 @@ Others have written good explanations on how to use "thenables", as they have co
  * http://howtonode.org/promises
  * http://promisesaplus.com/
 
+#### Accumulating values over serial `then()`s
+
+It's common to chain thenables for serial operations in order to have sane error handling and code flow.
+However, since thenables only keep a single value, it's difficult to accumulate values obtained this way without nesting the calls.
+This is unfortunate since "nested callback hell" is something thenables were supposed to help you avoid.
+
+Since await deals in sets rather than single values, it accumulates values for you, so that you don't have to nest the calls if you don't want.
+For example:
+
+```javascript
+function getUser() {
+  return await('user')...
+}
+function getFeed() {
+  return await('feed')...
+}
+function getFollowers() {
+  return await('followers')...
+}
+
+getUser()
+.then(function(){
+  return getFeed()
+})
+.then(function(){
+  return getFollowers()
+})
+.then(function(got){
+  // do stuff with got.user
+  // do stuff with got.feed
+  // do stuff with got.followers
+})
+```
+
+If there are collisions, await will prefer recent `then()`s over older ones.
+To avoid naming collisions, you can use await's `map()` method, which is documented in more detail later on.
+Example:
+
+```javascript
+function getFeed(name) { return await('feed')... }
+
+getFeed('sarah').map({'feed':'sarah_feed'})
+.then(function(){
+  return getFeed('mikael').map({'feed':'mikael_feed'})
+})
+.then(function(){
+  return getFeed('amber').map({'feed':'amber_feed'})
+})
+.then(function(got){
+  // do stuff with got.sarah_feed
+  // do stuff with got.mikael_feed
+  // do stuff with got.amber_feed
+})
+```
+
 ## Keeping promises (or failing)
 
 ### `promise.keep(name, [value])`

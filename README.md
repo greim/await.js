@@ -246,10 +246,10 @@ var proms = urls.map(function(url){
 })
 
 await.all(proms)
-.onkeep(function(got){
-  for (var i=0; i&lt;got.length; i++) {
-    got[i].data
-  }
+.onkeep(function(gots){
+  gots.forEach(function(got){
+    got.data // json response
+  })
 })
 ```
 

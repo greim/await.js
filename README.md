@@ -198,24 +198,24 @@ getUser()
 })
 ```
 
-If there are collisions, await will prefer recent `then()`s over older ones.
-To avoid naming collisions, you can use await's `map()` method, which is documented in more detail later on.
+If there are name collisions, await will prefer recent values over older ones.
+To avoid collisions, you can use await's `map()` method, which is documented in more detail later one.
 Example:
 
 ```javascript
 function getFeed(name) { return await('feed')... }
 
-getFeed('sarah').map({'feed':'sarah_feed'})
+getFeed('fez').map({'feed':'fez'})
 .then(function(){
-  return getFeed('mikael').map({'feed':'mikael_feed'})
+  return getFeed('bob').map({'feed':'bob'})
 })
 .then(function(){
-  return getFeed('amber').map({'feed':'amber_feed'})
+  return getFeed('ned').map({'feed':'ned'})
 })
 .then(function(got){
-  // do stuff with got.sarah_feed
-  // do stuff with got.mikael_feed
-  // do stuff with got.amber_feed
+  // got.fez
+  // got.bob
+  // got.ned
 })
 ```
 

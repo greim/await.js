@@ -327,6 +327,8 @@ SOFTWARE.
           thisProm.keep(name, val);
         },function(err){
           thisProm.fail(err);
+        },function(amount){
+          thisProm.progress(name, amount);
         });
       }
       return this;

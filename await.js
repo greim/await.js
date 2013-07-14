@@ -171,16 +171,24 @@ SOFTWARE.
 
     // ------------------------------------------------------------------------
 
-    progress: function(name, amount){
+    progress: function(){
       if (!this._allbacks) {
         return this;
       }
-      if (this._slots[name] === undefined) {
-        return this;
+      var amounts = arguments[0];
+      if (typeof arguments[0] === 'string' && typeof arguments[1] === 'number') {
+        amounts = {};
+        amounts[arguments[0]] = arguments[1];
       }
-      amount = parseFloat(amount) || 0;
-      amount = Math.max(Math.min(amount, 1), 0);
-      this._progress[name] = amount;
+      Object.keys(amounts).forEach(function(name){
+        var amount = amounts[name];
+        if (this._slots[name] === undefined) {
+          return;
+        }
+        amount = parseFloat(amount) || 0;
+        amount = Math.max(Math.min(amount, 1), 0);
+        this._progress[name] = amount;
+      }, this);
       this._allbacks.forEach(function(allback){
         if (allback.type === 'progress') {
           allback.callback.call(allback.context, this._progress);

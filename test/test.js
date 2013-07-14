@@ -314,6 +314,32 @@ describe('await', function(){
       })
       .progress('foo',.1)
     })
+
+    it('should accept an object with multiple values', function(done){
+      var amounts1 = []
+      var amounts2 = []
+      await('foo','bar')
+      .onprogress(function(prog){
+        amounts1.push(prog.foo)
+        amounts2.push(prog.bar)
+      })
+      .progress({foo:.3,bar:.2})
+      .progress({foo:.6,bar:.5})
+      .progress({bar:.7})
+      .keep('foo')
+      .keep('bar')
+      .onkeep(function(){
+        try {
+          var joined1 = amounts1.join(',')
+          var joined2 = amounts2.join(',')
+          assert.strictEqual(joined1, '0.3,0.6,0.6')
+          assert.strictEqual(joined2, '0.2,0.5,0.7')
+          done()
+        } catch(ex) {
+          done(ex)
+        }
+      })
+    })
   })
 
   // ###########################################################

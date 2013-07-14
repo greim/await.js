@@ -289,6 +289,18 @@ Await does not enforce progressively higher amounts; it assumes you know what yo
 However, it will enforce that `amount` is a number between 0.0 and 1.0.
 If `amount` is not a number and not parseable into a number, it will be treated as zero.
 
+`progress()` also accepts an object instead of a string and a number.
+This allows multiple progress values to be reported at once.
+
+```javascript
+// fires two events
+promise.progress('foo', .6)
+promise.progress('bar', .4)
+
+// fires one event
+promise.progress({ foo: .6, bar: .4 })
+```
+
 ## Grouping promises
 
 `await()` accepts other promises in addition to strings.

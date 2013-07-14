@@ -33,6 +33,22 @@ SOFTWARE.
   var slice = Array.prototype.slice;
 
   // ------------------------------------------------------------------------
+  // PROGRESS CLASS
+
+  function Progress(){}
+  Progress.prototype = {
+    getAverage: function(){
+      var names = Object.keys(this);
+      var total = 0;
+      for (var i=0; i<names.length; i++) {
+        total += this[names[i]];
+      }
+      var average = total / names.length;
+      return average;
+    }
+  };
+
+  // ------------------------------------------------------------------------
   // GOTTEN CLASS
 
   function Gotten(){}
@@ -58,6 +74,7 @@ SOFTWARE.
   // PROMISE CLASS
 
   function Promise() {
+    this._progress = new Progress();
     this._built = false;
     this._slots = {};
     this._got = new Gotten();
@@ -139,11 +156,37 @@ SOFTWARE.
 
     // ------------------------------------------------------------------------
 
+    onprogress: function(cb, ctx){
+      return this._on('progress', cb, ctx);
+    },
+
+    // ------------------------------------------------------------------------
+
     failer: function(){
       var thisProm = this;
       return function(){
         return Promise.prototype.fail.apply(thisProm, arguments);
       };
+    },
+
+    // ------------------------------------------------------------------------
+
+    progress: function(name, amount){
+      if (!this._allbacks) {
+        return this;
+      }
+      if (this._slots[name] === undefined) {
+        return this;
+      }
+      amount = parseFloat(amount) || 0;
+      amount = Math.max(Math.min(amount, 1), 0);
+      this._progress[name] = amount;
+      this._allbacks.forEach(function(allback){
+        if (allback.type === 'progress') {
+          allback.callback.call(allback.context, this._progress);
+        }
+      }, this);
+      return this;
     },
 
     // ------------------------------------------------------------------------
@@ -163,6 +206,7 @@ SOFTWARE.
         return this;
       }
       if (!this._failure && !this._success){
+        this._progress[name] = 1;
         this._slots[name] = true;
         this._got[name] = data;
         var kept = Object.keys(this._slots).every(function(item){
@@ -329,7 +373,7 @@ SOFTWARE.
           });
         }
       }
-      return function(onFulfilled, onRejected) {
+      return function(onFulfilled, onRejected, onProgress) {
         if (typeof onFulfilled !== 'function') {
           onFulfilled = defaultFulfilled;
         }
@@ -356,6 +400,14 @@ SOFTWARE.
               thenProm.fail(ex);
             }
           });
+          if (typeof onProgress === 'function') {
+            thisProm.onprogress(function(progress) {
+              try {
+                // make sure to call the prototype getAverage() in case there's a slot named "getAverage"
+                onProgress.call(thisProm, Progress.prototype.getAverage.call(thisProm._progress));
+              } catch(ex) {}
+            });
+          }
         });
       };
     })(),
@@ -394,6 +446,10 @@ SOFTWARE.
         if (item instanceof Promise) {
           this.take(item);
         }
+      }, this);
+
+      Object.keys(this._slots).forEach(function(slot){
+        this._progress[slot] = 0;
       }, this);
 
       return this;

@@ -74,7 +74,7 @@ You'll need some polyfill or Modernizr goodness to use it in browsers that don't
 
 An await promise represents a set of empty slots that need to be filled.
 A promise can be in one of three states: *unresolved*, *kept* or *failed*.
-Sometimes it's useful to think in terms of it being *unresolved* or *resolved*, where *resolved* means either *kept* or *failed*.
+Sometimes it's useful to think in terms of it being *unresolved* or *resolved*, where *resolved* means *either kept or failed*.
 
 A promise starts out in an unresolved state.
 As soon as each individual slot has been filled, the promise enters the kept state.
@@ -138,7 +138,26 @@ promise.onkeep(function(got){
 })
 ```
 
-### The `then(onkeep, onfail)` method
+#### Progress
+
+There is also an `onprogress()` method which behaves differently from the above event handlers.
+`onprogress()` callbacks that are added before the promise is resolved are stored and executed any number of times (including zero) during progress events.
+Progress callbacks that are added after the promise is resolved are silently ignored.
+Progress callbacks are only called while the promise is unresolved.
+Progress callbacks are passed an object containing the current progress of each slot.
+This object also has a `getAverage()` method that returns a number for reporting the overall progress of the promise.
+This allows you to implement either a multi-progress bar, or a single progress bar.
+All progress values are numbers between 0.0 and 1.0.
+
+```javascript
+promise.onprogress(function(prog){
+  progress.slotA // number between 0.0 and 1.0
+  progress.slotB // number between 0.0 and 1.0
+  // etc
+})
+```
+
+### The `then(onkeep, onfail, onprogress)` method
 
 The `then()` method conforms to the signature and behavioral contract outlined in the [Promises/A+ spec](http://promisesaplus.com/).
 Unlike the event handlers above, which are purely consumer methods, `then()` is both consumer and provider.
@@ -154,6 +173,11 @@ promise.then(function(got){
   // the value returned here fulfills
   // the promise returned by then()
   // same as above
+}, function(amount){
+  // there has been progress indicated
+  // by "amount". note that "amount" in
+  // this case is an average across all
+  // slots of this promise
 })
 ```
 
@@ -254,6 +278,16 @@ prom.onfail(function(err){
   err.message // 'Fake error!'
 })
 ```
+
+### `promise.progress(name, amount)`
+
+While the promise is unresolved, you can call this method any number of times to notify any listeners of progress.
+Calling this method after the promise is resolved is a no-op.
+`name` is a string naming the slot that has progressed.
+`amount` is a number between 0.0 and 1.0.
+Await does not enforce progressively higher amounts; it assumes you know what you're doing in this regard.
+However, it will enforce that `amount` is a number between 0.0 and 1.0.
+If `amount` is not a number and not parseable into a number, it will be treated as zero.
 
 ## Grouping promises
 
@@ -502,7 +536,7 @@ nodeApi.doSomething(promise.nodify(null, 'foo'))
     </tr>
     <tr>
       <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.onfail(callback[, context])</td>
-      <td>Calls <code>callback</code> when promise fails. If promise already failed, <code>callback</code> runs immediately. <code>callback</code> is passed the the set of args that were passed to the <code>fail()</code> call which triggered the fail. If defined and not null, <code>context</code> will be <code>this</code> in <code>callback</code>.</td>
+      <td>Calls <code>callback</code> when promise fails. If promise already failed, <code>callback</code> runs immediately. <code>callback</code> is passed the error object representing the reason for the failure, which was passed to <code>fail()</code> method triggering the failure. If defined and not null, <code>context</code> will be <code>this</code> in <code>callback</code>.</td>
       <td>itself</td>
     </tr>
     <tr>
@@ -511,7 +545,12 @@ nodeApi.doSomething(promise.nodify(null, 'foo'))
       <td>itself</td>
     </tr>
     <tr>
-      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.then(onkeep, onfail)</td>
+      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.onprogress(callback[, context])</td>
+      <td>Calls <code>callback</code> whenever there is progress to report. <code>callback</code> is only called while promise is unresolved. <code>callback</code> may be called any number of times, or never called at all. If promise has already been kept or failed, <code>callback</code> is ignored and discarded. <code>callback</code> is passed an object keyed by names and valued by numbers between 0.0 and 1.0. If defined and not null, <code>context</code> will be <code>this</code> in <code>callback</code>.</td>
+      <td>itself</td>
+    </tr>
+    <tr>
+      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.then(onkeep, onfail, onprogress)</td>
       <td>Conforms to the signature and behavioral conventions outlined in the Promises/A+ spec.</td>
       <td>A new await.js promise</td>
     </tr>
@@ -526,8 +565,13 @@ nodeApi.doSomething(promise.nodify(null, 'foo'))
       <td>itself</td>
     </tr>
     <tr>
-      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.fail(...)</td>
-      <td>Fail the promise for the given <code>reason</code>. The first argument is a string. Any number of subsequent arguments are allowed. The whole list of args will then be applied to all <code>onfail()</code> callbacks.</td>
+      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.fail(reason)</td>
+      <td>Fail the promise for the given <code>reason</code>. The first argument should be an error object.</td>
+      <td>itself</td>
+    </tr>
+    <tr>
+      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.progress(name, amount)</td>
+      <td>Notify any progress listeners of progress on item <code>name</code>. <code>amount</code> is a fractional value between 0.0 and 1.0. Lower values will be converted to 0.0, higher ones converted to 1.0. </td>
       <td>itself</td>
     </tr>
     <tr>

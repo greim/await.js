@@ -160,6 +160,73 @@ describe('await', function(){
 
   // ###########################################################
 
+  describe('#onprogress()', function(){
+
+    it('should be chainable', function(){
+      var ref1 = await();
+      var ref2 = ref1.onprogress(function(){});
+      assert.strictEqual(ref1, ref2)
+    })
+
+    it('should work', function(done){
+      var amounts1 = []
+      var amounts2 = []
+      await('foo','bar')
+      .onprogress(function(prog){
+        amounts1.push(prog.foo)
+        amounts2.push(prog.bar)
+      })
+      .progress('foo',.3)
+      .progress('foo',.6)
+      .progress('bar',.2)
+      .progress('bar',.5)
+      .progress('bar',.7)
+      .keep('foo')
+      .keep('bar')
+      .onkeep(function(){
+        try {
+          var joined1 = amounts1.join(',')
+          var joined2 = amounts2.join(',')
+          assert.strictEqual(joined1, '0.3,0.6,0.6,0.6,0.6')
+          assert.strictEqual(joined2, '0,0,0.2,0.5,0.7')
+          done()
+        } catch(ex) {
+          done(ex)
+        }
+      })
+    })
+
+    it('should not call onprogress set after progress events', function(done){
+      var amounts = []
+      await('foo')
+      .progress('foo',.3)
+      .progress('foo',.6)
+      .onprogress(function(prog){
+        done(new Error('progress should not be called here'))
+      })
+      .keep('foo')
+      .onkeep(function(){
+        done()
+      })
+    })
+
+    it('should not call onprogress set after keep', function(done){
+      var amounts = []
+      await('foo')
+      .keep('foo')
+      .onprogress(function(prog){
+        done(new Error('progress should not be called here'))
+      })
+      .progress('foo',.3)
+      .progress('foo',.6)
+      .onkeep(function(){
+        done()
+      })
+    })
+  })
+
+  // ###########################################################
+
   describe('#keep()', function(){
 
     it('should be chainable', function(){
@@ -223,6 +290,29 @@ describe('await', function(){
       await('foo').fail().onfail(function(){
         done()
       })
+    })
+  })
+
+  // ###########################################################
+
+  describe('#progress()', function(){
+    it('should be chainable', function(){
+      var ref1 = await('foo');
+      var ref2 = ref1.progress('foo',.2);
+      assert.strictEqual(ref1, ref2)
+    })
+
+    it('should work', function(done){
+      await('foo')
+      .onprogress(function(prog){
+        try {
+          assert.strictEqual(prog.foo, .1)
+          done()
+        } catch(ex) {
+          done(ex)
+        }
+      })
+      .progress('foo',.1)
     })
   })
 
@@ -1446,6 +1536,34 @@ describe('await', function(){
       .catch(function(reason){
         try {
           assert.strictEqual(reason, err)
+          done()
+        } catch(ex) {
+          done(ex)
+        }
+      })
+    })
+
+    it('should call onprogress on progress', function(done){
+      var amounts = [];
+      var p = await('foo','bar','baz','qux')
+      p.then(null,null,function(amount){
+        amounts.push(amount)
+      })
+      p
+      .progress('foo',.5)
+      .progress('bar',.5)
+      .progress('foo',1)
+      .progress('bar',1)
+      .progress('baz',1)
+      .keep('foo')
+      .keep('bar')
+      .keep('baz')
+      .keep('qux')
+      .onkeep(function(){
+        try{
+          assert.strictEqual(amounts.length, 5)
+          var joined = amounts.join(',')
+          assert.strictEqual(joined, '0.125,0.25,0.375,0.5,0.75')
           done()
         } catch(ex) {
           done(ex)

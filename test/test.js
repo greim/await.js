@@ -1429,6 +1429,29 @@ describe('await', function(){
         }
       })
     })
+
+    it('should fail properly while accumulating over multiple calls to then', function(done){
+      var err = new Error()
+      await('foo')
+      .fail(err)
+      .then(function(){
+        return await('bar').keep('bar','bar')
+      })
+      .then(function(){
+        return await('baz').keep('baz','baz')
+      })
+      .then(function(got){
+        done(new Error('did not catch error'))
+      })
+      .catch(function(reason){
+        try {
+          assert.strictEqual(reason, err)
+          done()
+        } catch(ex) {
+          done(ex)
+        }
+      })
+    })
   })
 })
 

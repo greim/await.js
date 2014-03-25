@@ -995,6 +995,28 @@ describe('await', function(){
       })
     })
 
+    it('should have method "filter"', function(done){
+      var proms = [
+        await('foo').keep('foo', 0),
+        await('foo').keep('foo', 1),
+        await('foo').keep('foo', 2),
+        await('foo').keep('foo', 3)
+      ]
+      await.all(proms).onkeep(function(gots){
+        try {
+          var odds = gots.filter(function(got){
+            return got.foo % 2
+          })
+          assert.strictEqual(odds.length, 2)
+          assert.strictEqual(odds[0].foo, 1)
+          assert.strictEqual(odds[1].foo, 3)
+          done()
+        } catch(ex) {
+          done(ex)
+        }
+      })
+    })
+
     it('should have method "keys"', function(done){
       await('foo','bar').keep('foo').keep('bar')
       .onkeep(function(got){

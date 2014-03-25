@@ -60,6 +60,7 @@ SOFTWARE.
     reduce: Array.prototype.reduce,
     slice: Array.prototype.slice,
     join: Array.prototype.join,
+    filter: Array.prototype.filter,
     keys: function(){
       return Object.keys(this);
     },

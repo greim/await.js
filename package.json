@@ -1,9 +1,17 @@
 {
-    "name": "await"
-  , "version": "0.2.1"
-  , "description": "Set-theoretical promises"
-  , "keywords": ["promises", "futures", "deferreds", "asynchronous"]
-  , "author": "Greg Reimer <gregreimer@gmail.com> (http://obadger.com/)"
-  , "repository": { "type": "git", "url": "git://github.com/greim/await.js.git" }
-  , "main": "./await.js"
+  "name": "await",
+  "version": "0.2.1",
+  "description": "Set-theoretical promises",
+  "keywords": [
+    "promises",
+    "futures",
+    "deferreds",
+    "asynchronous"
+  ],
+  "author": "Greg Reimer <gregreimer@gmail.com> (http://obadger.com/)",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/greim/await.js.git"
+  },
+  "main": "./await.js"
 }

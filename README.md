@@ -538,7 +538,7 @@ nodeApi.doSomething(promise.nodify(null, 'foo'))
     </tr>
     <tr>
       <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.run(callback[, context])</td>
-      <td>Runs <code>callback</code> immediately (synchronously), which contains whatever promise fulfillment logic you want. <code>callback</code> is passed a reference to the promise. If defined and not null, <code>context</code> will be <code>this</code> in <code>callback</code>.</td>
+      <td>Runs <code>callback</code> immediately (synchronously), which contains whatever promise fulfillment logic you want. <code>callback</code> is passed a reference to the promise. If defined and not null, <code>context</code> will be <code>this</code> in <code>callback</code>. Exceptions thrown by <code>callback</code> automatically fail the promise.</td>
       <td>itself</td>
     </tr>
     <tr>

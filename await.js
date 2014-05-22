@@ -90,10 +90,14 @@ SOFTWARE.
 
     /**
     Runs the given callback, passing it an instance of the promise,
-    and then returning that same instance.
+    and then returning that same instance. Fails on exception.
     */
     run: function(cb, ctx){
-      cb.call(ctx, this);
+      try {
+        cb.call(ctx, this);
+      } catch(ex) {
+        this.fail(ex);
+      }
       return this;
     },
 

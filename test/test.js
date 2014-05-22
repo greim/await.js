@@ -61,6 +61,21 @@ describe('await', function(){
       await().run(function(){ ref2 = this }, ref1);
       assert.strictEqual(ref1, ref2)
     })
+
+    it('should fail the promise if exception is thrown', function(done){
+      await('foo')
+      .onfail(function(err){
+        assert.ok(err instanceof Error)
+        done()
+      })
+      .onkeep(function(){
+        done(new Error('should not have kept'))
+      })
+      .run(function(){
+        throw new Error('fake')
+      })
+      .keep('foo')
+    })
   })
 
   // ###########################################################

@@ -211,10 +211,10 @@ SOFTWARE.
       if (data === undefined) {
         data = null;
       }
-      if (this._got[name] !== undefined){
+      if (this._got.hasOwnProperty(name)){
         return this;
       }
-      if (this._slots[name] === undefined) {
+      if (!this._slots.hasOwnProperty(name)) {
         this._got[name] = data;
         return this;
       }

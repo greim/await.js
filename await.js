@@ -512,22 +512,21 @@ SOFTWARE.
   // ------------------------------------------------------------------------
   // EXPORT
 
-  // for browsers
-  try {
+  if (module && module.exports){
+    
+    // for common js
+    module.exports = await;
+    // back compat, for people calling this lib
+    // like var await = require('await').await
+    module.exports.await = await;
+  } else {
+
+    // for browsers
     if (typeof define === 'function' && define.amd) {
       define('await', [], function(){ return await; });
     } else {
       window.await = await;
     }
-  } catch(err) {}
-
-  // for node
-  try {
-    module.exports = await;
-    // back compat, for people calling this lib
-    // like var await = require('await').await
-    module.exports.await = await;
-  } catch(err) {}
-
+  }
 })();
 

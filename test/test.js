@@ -33,6 +33,15 @@ describe('await', function(){
 
   // ###########################################################
 
+  describe('global', function(){
+
+    it('should not assign itself to global', function(){
+      assert.ok(global.await === undefined)
+    })
+  })
+
+  // ###########################################################
+
   describe('#run()', function(){
 
     it('should be chainable', function(){

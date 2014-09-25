@@ -429,7 +429,7 @@ SOFTWARE.
 
     // ------------------------------------------------------------------------
 
-    catch: function(onRejected){
+    "catch": function(onRejected){
       return this.then(null, onRejected);
     },
 

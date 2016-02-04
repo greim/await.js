@@ -351,7 +351,7 @@ SOFTWARE.
           items.push(item);
         }
       });
-      return await.apply(this, items).take(this, map);
+      return _await.apply(this, items).take(this, map);
     },
 
     // ------------------------------------------------------------------------
@@ -361,10 +361,10 @@ SOFTWARE.
       function defaultFulfilled(){ return this; }
       function defaultRejected(err){ throw err; }
       function fulfillWithResult(thenProm, returned, got) {
-        if (returned instanceof await) {
+        if (returned instanceof _await) {
           thenProm._buildState(returned);
         } else {
-          var valueProm = await('value').run(function(prom){
+          var valueProm = _await('value').run(function(prom){
             if (returned && typeof returned.then === 'function') {
               returned.then(function(val) {
                 prom.keep('value', val);
@@ -397,7 +397,7 @@ SOFTWARE.
         }
         var thisProm = this;
         // empty promise so it can build state from a future promise
-        return await().run(function(thenProm) {
+        return _await().run(function(thenProm) {
           thisProm
           .onkeep(function(got) {
             try {
@@ -475,7 +475,7 @@ SOFTWARE.
   // FACTORY FUNCTION
 
   // this is the function exported
-  var await = function(){
+  var _await = function(){
     var prom = new Promise();
     prom._buildState.apply(prom, arguments);
     return prom;
@@ -484,15 +484,15 @@ SOFTWARE.
   // ------------------------------------------------------------------------
   // AWAITING LISTS
 
-  await.all = function(list) {
+  _await.all = function(list) {
     if (!list || list.length === 0) {
-      return await('length').keep('length',0);
+      return _await('length').keep('length',0);
     }
     var keys = list.map(function(prom, idx){
       return idx;
     });
     keys.push('length');
-    return await.apply(this, keys).run(function(allProm){
+    return _await.apply(this, keys).run(function(allProm){
       allProm.keep('length', list.length);
       list.forEach(function(prom, idx){
         prom.onfail(allProm.failer());
@@ -507,7 +507,7 @@ SOFTWARE.
   // INSTANCEOF SUPPORT
 
   // so that "foo instanceof await" works
-  await.prototype = Promise.prototype;
+  _await.prototype = Promise.prototype;
 
   // ------------------------------------------------------------------------
   // EXPORT
@@ -515,17 +515,17 @@ SOFTWARE.
   if (module && module.exports){
     
     // for common js
-    module.exports = await;
+    module.exports = _await;
     // back compat, for people calling this lib
     // like var await = require('await').await
-    module.exports.await = await;
+    module.exports['await'] = _await;
   } else {
 
     // for browsers
     if (typeof define === 'function' && define.amd) {
-      define('await', [], function(){ return await; });
+      define('await', [], function(){ return _await; });
     } else {
-      window.await = await;
+      window['await'] = _await;
     }
   }
 })();

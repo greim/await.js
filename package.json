@@ -1,6 +1,6 @@
 {
   "name": "await",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "Set-theoretical promises",
   "keywords": [
     "promises",
@@ -8,10 +8,17 @@
     "deferreds",
     "asynchronous"
   ],
+  "scripts": {
+    "test": "mocha"
+  },
   "author": "Greg Reimer <gregreimer@gmail.com> (http://obadger.com/)",
   "repository": {
     "type": "git",
     "url": "git://github.com/greim/await.js.git"
   },
-  "main": "./await.js"
+  "main": "./await.js",
+  "devDependencies": {
+    "mocha": "^2.4.5",
+    "q": "^1.4.1"
+  }
 }

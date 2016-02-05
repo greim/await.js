@@ -1,8 +1,6 @@
-Tests run in node and depend on mocha.
+To run tests, stand in the repo root and do:
 
-    npm install -g mocha
-
-Run tests by standing in this dir and issuing this command:
-
-    mocha
-
+```
+npm install # once only
+npm test
+```

@@ -67,7 +67,7 @@ SOFTWARE.
     values: function(){
       return Object.keys(this).map(function(name){
         return this[name];
-      }, this)
+      }, this);
     }
   };
 
@@ -116,7 +116,7 @@ SOFTWARE.
         // timeout guarantees cb gets
         // executed after return
         var thisProm = this;
-        setTimeout(function(){        
+        setTimeout(function(){
           if (event === 'resolve') {
             cb.call(ctx);
           }
@@ -342,7 +342,7 @@ SOFTWARE.
     // ------------------------------------------------------------------------
 
     map: function(map){
-      map || (map = {});
+      map || (map = {}); // eslint-disable-line no-unused-expressions
       var items = [];
       Object.keys(this._slots).forEach(function(item){
         if (map.hasOwnProperty(item)) {
@@ -416,7 +416,7 @@ SOFTWARE.
             }
           });
           if (typeof onProgress === 'function') {
-            thisProm.onprogress(function(progress) {
+            thisProm.onprogress(function() {
               try {
                 // make sure to call the prototype getAverage() in case there's a slot named "getAverage"
                 onProgress.call(thisProm, Progress.prototype.getAverage.call(thisProm._progress));
@@ -448,7 +448,7 @@ SOFTWARE.
       // Populate slots.
       items.forEach(function(item) {
         if (item instanceof Promise) {
-          Object.keys(item._slots).forEach(function(item) {
+          Object.keys(item._slots).forEach(function(item) { // eslint-disable-line no-shadow
             this._slots[item] = false;
           }, this);
         } else {
@@ -513,7 +513,7 @@ SOFTWARE.
   // EXPORT
 
   if (module && module.exports){
-    
+
     // for common js
     module.exports = _await;
     // back compat, for people calling this lib
@@ -529,4 +529,3 @@ SOFTWARE.
     }
   }
 })();
-

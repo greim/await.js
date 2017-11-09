@@ -592,11 +592,6 @@ nodeApi.doSomething(promise.nodify(null, 'foo'))
       <td>itself</td>
     </tr>
     <tr>
-      <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.things()</td>
-      <td>Retrieve a list of things this promise is awaiting.</td>
-      <td>array</td>
-    </tr>
-    <tr>
       <td style="white-space: nowrap;font-family: monospace;font-size:90%;">promise.map(mapping)</td>
       <td>Get a copy of this promise. <code>mapping</code> updates the names of the things in the new promise, which is useful for avoiding naming conflicts during grouping. The copy is automatically chained to the original.</td>
       <td>different promise</td>
